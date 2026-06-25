@@ -44,3 +44,18 @@ npm.cmd run dev
 - JavaScript
 - CSS
 - localStorage
+- vite-plugin-pwa
+
+## PWA
+
+ホーム画面に追加できるPWAとしてビルドできます。
+
+```bash
+npm install vite-plugin-pwa --save-dev
+npm run build
+```
+
+アイコンは次の場所に配置しています。
+
+- `public/icons/icon-192.png`
+- `public/icons/icon-512.png`
