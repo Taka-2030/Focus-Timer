@@ -116,6 +116,16 @@ function formatCookies(value) {
   return Math.round(Number(value) || 0).toLocaleString();
 }
 
+function createStableId(prefix) {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  const timePart = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `${prefix}-${timePart}-${randomPart}`;
+}
+
 function getItemBonus(purchasedItems) {
   return shopItems.reduce((sum, item) => {
     const count = Number(purchasedItems[item.id] || 0);
@@ -249,21 +259,30 @@ function App() {
   }, [isRunning, mode, selectedTaskId, settings, gameState, sessions]);
 
   function addTask(task) {
-    const title = task.title.trim();
+    const title = String(task.title ?? '').trim();
+    if (!title) return;
     const estimate = Math.max(1, Number(task.estimate) || 1);
-    const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate) ? task.dueDate : '';
+    const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate ?? '') ? task.dueDate : null;
+    const priority = ['high', 'medium', 'low'].includes(task.priority) ? task.priority : 'medium';
     const newTask = {
-      id: crypto.randomUUID(),
+      id: createStableId('task'),
       title,
       estimate,
-      priority: task.priority,
+      priority,
       dueDate,
       completed: false,
       completedPomodoros: 0,
       createdAt: new Date().toISOString(),
     };
-    setTasks((current) => [newTask, ...current]);
+    const nextTasks = [newTask, ...tasks];
+    setTasks(nextTasks);
+    saveAppData({ tasks: nextTasks, sessions, settings, gameState });
     setSelectedTaskId(newTask.id);
+    return {
+      newTask,
+      beforeLength: tasks.length,
+      nextLength: nextTasks.length,
+    };
   }
 
   function updateTask(taskId, updates) {
@@ -322,7 +341,7 @@ function App() {
     const completedAt = new Date();
     const minutes = Number(settings[modes[currentMode].settingsKey]);
     const session = {
-      id: crypto.randomUUID(),
+      id: createStableId('session'),
       taskId: currentMode === 'work' ? selectedTaskId : '',
       mode: currentMode,
       minutes,
@@ -340,7 +359,7 @@ function App() {
         totalCookiesEarned: current.totalCookiesEarned + reward,
         currentStreak: current.currentStreak + 1,
       }));
-      setRewardToast({ id: crypto.randomUUID(), amount: reward });
+      setRewardToast({ id: createStableId('reward'), amount: reward });
 
       if (selectedTaskId) {
         setTasks((current) =>
@@ -532,40 +551,142 @@ function App() {
 
 function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTask, onSelectTask }) {
   const { t } = useTranslation();
-  const [draft, setDraft] = React.useState({
+  const initialDraft = {
     title: '',
     estimate: 4,
     priority: 'medium',
     dueDate: '',
-  });
+  };
+  const [draft, setDraft] = React.useState(initialDraft);
+  const formRef = React.useRef(null);
+  const titleInputRef = React.useRef(null);
+  const estimateInputRef = React.useRef(null);
+  const prioritySelectRef = React.useRef(null);
+  const dueDateInputRef = React.useRef(null);
+  const taskListRef = React.useRef(null);
+  const lastAddRef = React.useRef({ signature: '', time: 0 });
+  const [taskDebug, setTaskDebug] = React.useState(null);
 
-  function submitDraftTask() {
-    if (!draft.title.trim()) return;
-    onAddTask(draft);
-    setDraft({ title: '', estimate: 4, priority: 'medium', dueDate: '' });
+  function readTaskDraftFromInputs() {
+    const title = String(titleInputRef.current?.value ?? draft.title).trim();
+    const estimate = Number(estimateInputRef.current?.value ?? draft.estimate) || 1;
+    const priority = String(prioritySelectRef.current?.value ?? draft.priority);
+    const dueDateValue = String(dueDateInputRef.current?.value ?? draft.dueDate);
+
+    return {
+      title,
+      estimate,
+      priority,
+      dueDate: dueDateValue || null,
+    };
   }
 
-  function submitTask(event) {
-    event.preventDefault();
-    submitDraftTask();
+  React.useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    setTaskDebug((current) => {
+      if (!current || current.status !== 'task added') return current;
+      return { ...current, afterRenderTasksLength: tasks.length };
+    });
+  }, [tasks.length]);
+
+  function updateTaskDebug(source, values, status, details = {}) {
+    if (!import.meta.env.DEV) return;
+    const beforeLength = details.beforeLength ?? tasks.length;
+    const nextLength = details.nextLength ?? beforeLength;
+    setTaskDebug({
+      source,
+      status,
+      title: values?.title ?? '',
+      dueDate: values?.dueDate ?? null,
+      tasksLength: beforeLength,
+      nextTasksLength: nextLength,
+      afterRenderTasksLength: details.afterRenderTasksLength ?? null,
+      newTaskId: details.newTask?.id ?? null,
+      error: details.error ?? '',
+      time: new Date().toLocaleTimeString(),
+    });
   }
 
-  function submitTaskFromTitle(event) {
+  function handleAddTask(event, source = event?.type ?? 'manual') {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    const nextTask = readTaskDraftFromInputs();
+    const { title, estimate, priority, dueDate } = nextTask;
+
+    updateTaskDebug(source, nextTask, 'handleAddTask called');
+    if (!title) {
+      updateTaskDebug(source, nextTask, 'empty title');
+      return;
+    }
+    const signature = JSON.stringify({
+      title,
+      estimate,
+      priority,
+      dueDate,
+    });
+    const now = Date.now();
+
+    if (lastAddRef.current.signature === signature && now - lastAddRef.current.time < 800) {
+      updateTaskDebug(source, nextTask, 'duplicate blocked');
+      return;
+    }
+
+    let addResult;
+    try {
+      addResult = onAddTask({
+        title,
+        estimate,
+        priority,
+        dueDate,
+      });
+    } catch (error) {
+      updateTaskDebug(source, nextTask, 'add failed', {
+        beforeLength: tasks.length,
+        nextLength: tasks.length,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+
+    lastAddRef.current = { signature, time: now };
+    updateTaskDebug(source, nextTask, 'task added', {
+      beforeLength: addResult?.beforeLength ?? tasks.length,
+      nextLength: addResult?.nextLength ?? tasks.length + 1,
+      newTask: addResult?.newTask ?? null,
+    });
+    setDraft(initialDraft);
+
+    window.requestAnimationFrame(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      taskListRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+
+  function submitFormFromTitle(event) {
     if (event.key !== 'Enter' || event.isComposing) return;
     event.preventDefault();
-    submitDraftTask();
+    handleAddTask(event, 'title enter');
   }
 
   return (
     <section className="view-stack">
-      <form className="task-form" onSubmit={submitTask} noValidate>
+      <form
+        className="task-form"
+        ref={formRef}
+        onSubmit={(event) => handleAddTask(event, 'form submit')}
+        noValidate
+      >
         <label>
           {t('tasks.name')}
             <input
+              ref={titleInputRef}
               name="task-title"
               value={draft.title}
               onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-              onKeyDown={submitTaskFromTitle}
+              onKeyDown={submitFormFromTitle}
               placeholder={t('tasks.placeholder')}
               autoComplete="off"
             />
@@ -574,6 +695,7 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
           <label>
             {t('tasks.estimate')}
             <input
+              ref={estimateInputRef}
               min="1"
               name="task-estimate"
               type="number"
@@ -584,6 +706,8 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
           <label>
             {t('tasks.priority')}
             <select
+              ref={prioritySelectRef}
+              name="task-priority"
               value={draft.priority}
               onChange={(event) => setDraft({ ...draft, priority: event.target.value })}
             >
@@ -595,6 +719,7 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
           <label>
             {t('tasks.dueDate')}
             <input
+              ref={dueDateInputRef}
               name="task-due-date"
               type="date"
               value={draft.dueDate}
@@ -602,13 +727,36 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
             />
           </label>
         </div>
-        <button className="primary-button" type="submit">
+        <button
+          className="primary-button"
+          type="button"
+          onClick={(event) => handleAddTask(event, 'button click')}
+          onTouchEnd={(event) => handleAddTask(event, 'button touchend')}
+        >
           <Plus size={18} />
           {t('common.add')}
         </button>
+        {import.meta.env.DEV && taskDebug && (
+          <div className="task-debug-panel" aria-live="polite">
+            <strong>DEBUG</strong>
+            <span>{taskDebug.status}</span>
+            <span>source: {taskDebug.source}</span>
+            <span>title: {taskDebug.title || '-'}</span>
+            <span>due: {taskDebug.dueDate || '-'}</span>
+            <span>
+              tasks: {taskDebug.tasksLength} -&gt; {taskDebug.nextTasksLength}
+            </span>
+            {taskDebug.afterRenderTasksLength !== null && (
+              <span>after: {taskDebug.afterRenderTasksLength}</span>
+            )}
+            {taskDebug.newTaskId && <span>id: {taskDebug.newTaskId}</span>}
+            {taskDebug.error && <span>error: {taskDebug.error}</span>}
+            <span>{taskDebug.time}</span>
+          </div>
+        )}
       </form>
 
-      <div className="task-list">
+      <div className="task-list" ref={taskListRef}>
         {tasks.length === 0 ? (
           <EmptyState title={t('tasks.emptyTitle')} text={t('tasks.emptyText')} />
         ) : (
