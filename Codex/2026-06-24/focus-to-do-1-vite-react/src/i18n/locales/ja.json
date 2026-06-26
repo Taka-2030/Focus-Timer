@@ -4,6 +4,9 @@
     "noTask": "タスク未選択",
     "cookies": "Cookies"
   },
+  "cookies": {
+    "label": "Cookies"
+  },
   "nav": {
     "tasks": "タスク",
     "timer": "タイマー",
@@ -104,13 +107,20 @@
     "use": "使用する",
     "using": "使用中",
     "buy": "購入",
-    "notEnoughCookies": "Cookies不足"
+    "notEnoughCookies": "Cookies不足",
+    "switch": "デザイン",
+    "select": "{{name}}を選択"
   },
   "focus": {
     "fullscreen": "⛶ Full Screen",
     "enter": "全画面に入る",
     "exit": "全画面を解除",
     "exitFullscreen": "全画面を解除"
+  },
+  "boost": {
+    "total": "Total Boost +{{percent}}%",
+    "active": "有効なBoost",
+    "none": "Boostなし"
   },
   "developer": {
     "title": "Developer Panel",

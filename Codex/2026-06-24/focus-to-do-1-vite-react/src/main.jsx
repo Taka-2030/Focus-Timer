@@ -142,6 +142,24 @@ function calculateCookieReward(minutes, gameState, completedAt = new Date()) {
   return Math.max(0, Math.round(reward * 10) / 10);
 }
 
+function getActiveBoostDetails(gameState, date = new Date()) {
+  const boosts = [];
+  if (hasUpgrade(gameState, 'focusBoost1')) {
+    boosts.push({ id: 'focusBoost1', labelKey: 'shop.focusBoost1', icon: '✨', percent: 10 });
+  }
+  if (hasUpgrade(gameState, 'morningBoost') && date.getHours() < 12) {
+    boosts.push({ id: 'morningBoost', labelKey: 'shop.morningBoost', icon: '🌅', percent: 20 });
+  }
+  if (hasUpgrade(gameState, 'streakBonus') && (gameState.currentStreak + 1) % 3 === 0) {
+    boosts.push({ id: 'streakBonus', labelKey: 'shop.streakBonus', icon: '🔥', percent: 30 });
+  }
+  return boosts;
+}
+
+function getTotalBoostPercent(boosts) {
+  return boosts.reduce((sum, boost) => sum + boost.percent, 0);
+}
+
 function getLastSevenDays(sessions) {
   const today = new Date();
   const workSessions = sessions.filter((session) => session.mode === 'work');
@@ -176,6 +194,7 @@ function App() {
   const [audioReady, setAudioReady] = React.useState(false);
   const [rewardToast, setRewardToast] = React.useState(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [timerAnimationResetKey, setTimerAnimationResetKey] = React.useState(0);
   const shouldAutoStartRef = React.useRef(false);
 
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
@@ -208,6 +227,7 @@ function App() {
   React.useEffect(() => {
     setSecondsLeft(minutesToSeconds(settings[modes[mode].settingsKey]));
     setIsRunning(shouldAutoStartRef.current);
+    setTimerAnimationResetKey((current) => current + 1);
     shouldAutoStartRef.current = false;
   }, [mode, settings.workMinutes, settings.shortBreakMinutes, settings.longBreakMinutes]);
 
@@ -348,6 +368,7 @@ function App() {
     shouldAutoStartRef.current = false;
     setIsRunning(false);
     setSecondsLeft(minutesToSeconds(settings[modes[mode].settingsKey]));
+    setTimerAnimationResetKey((current) => current + 1);
   }
 
   async function toggleFullscreen() {
@@ -399,7 +420,9 @@ function App() {
 
   return (
     <div
-      className={`app view-${activeView} ${isFullscreen ? 'focus-fullscreen' : ''}`}
+      className={`app view-${activeView} ${
+        isFullscreen ? `focus-fullscreen fullscreen-design-${gameState.selectedTimerDesign}` : ''
+      }`}
       style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}
     >
       <main className="shell">
@@ -444,7 +467,10 @@ function App() {
             audioReady={audioReady}
             rewardToast={rewardToast}
             selectedTask={selectedTask}
+            gameState={gameState}
             timerDesignId={gameState.selectedTimerDesign}
+            timerAnimationResetKey={timerAnimationResetKey}
+            onSelectTimerDesign={selectTimerDesign}
             isFullscreen={isFullscreen}
             toggleFullscreen={toggleFullscreen}
           />
@@ -615,17 +641,54 @@ function TimerView({
   audioReady,
   rewardToast,
   selectedTask,
+  gameState,
   timerDesignId,
+  timerAnimationResetKey,
+  onSelectTimerDesign,
   isFullscreen,
   toggleFullscreen,
 }) {
   const { t } = useTranslation();
+  const [showBoostDetails, setShowBoostDetails] = React.useState(false);
+  const ownedTimerDesigns = TIMER_DESIGNS.filter((design) =>
+    gameState.ownedTimerDesigns.includes(design.id),
+  );
+  const activeBoosts = getActiveBoostDetails(gameState);
+  const totalBoostPercent = getTotalBoostPercent(activeBoosts);
+  const boostChipLabel =
+    activeBoosts.length > 1
+      ? `✨ ${t('boost.total', { percent: totalBoostPercent })}`
+      : activeBoosts.length === 1
+        ? `${activeBoosts[0].icon} ${t(activeBoosts[0].labelKey)} +${activeBoosts[0].percent}%`
+        : `✨ ${t('boost.none')}`;
 
   return (
     <section className={`timer-view timer-design-${timerDesignId}`}>
       <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
         {isFullscreen ? t('focus.exitFullscreen') : t('timer.fullscreen')}
       </button>
+      <div className="timer-compact-info">
+        <div className="mini-cookie-pill" aria-label={t('cookies.label')}>
+          {'\uD83C\uDF6A'} {formatCookies(gameState.cookies)}
+        </div>
+        <button
+          className="boost-chip"
+          type="button"
+          onClick={() => setShowBoostDetails((current) => !current)}
+          aria-expanded={showBoostDetails}
+        >
+          {boostChipLabel}
+        </button>
+        {showBoostDetails && activeBoosts.length > 0 && (
+          <div className="boost-popover">
+            {activeBoosts.map((boost) => (
+              <span key={boost.id}>
+                {boost.icon} {t(boost.labelKey)} +{boost.percent}%
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="focus-context">
         <span>{selectedTask ? selectedTask.title : t('app.noTask')}</span>
       </div>
@@ -652,9 +715,28 @@ function TimerView({
         timerDesignId={timerDesignId}
         secondsLeft={secondsLeft}
         totalSeconds={totalSeconds}
+        isRunning={isRunning}
+        resetKey={timerAnimationResetKey}
         modeLabel={t(modes[mode].labelKey)}
         formatTime={formatTime}
       />
+
+      <div className="timer-design-switch" aria-label={t('timerDesign.switch')}>
+        <span>{t('timerDesign.switch')}</span>
+        <div className="timer-design-chips">
+          {ownedTimerDesigns.map((design) => (
+            <button
+              key={design.id}
+              className={timerDesignId === design.id ? 'active' : ''}
+              type="button"
+              onClick={() => onSelectTimerDesign(design.id)}
+              aria-label={t('timerDesign.select', { name: t(design.nameKey) })}
+            >
+              {t(design.nameKey)}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <label className="task-select">
         {t('timer.focusTask')}
@@ -694,11 +776,8 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
   return (
     <section className="view-stack">
       <div className="shop-summary">
-        <span>{t('app.cookies')}</span>
-        <strong>🍪 {formatCookies(gameState.cookies)}</strong>
-        <small>
-          {t('common.totalEarned')}: {formatCookies(gameState.totalCookiesEarned)}
-        </small>
+        <span>{t('common.totalEarned')}</span>
+        <strong>{formatCookies(gameState.totalCookiesEarned)}</strong>
       </div>
 
       <div className="shop-section">

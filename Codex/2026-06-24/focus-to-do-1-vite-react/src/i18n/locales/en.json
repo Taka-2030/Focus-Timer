@@ -4,6 +4,9 @@
     "noTask": "No task selected",
     "cookies": "Cookies"
   },
+  "cookies": {
+    "label": "Cookies"
+  },
   "nav": {
     "tasks": "Tasks",
     "timer": "Timer",
@@ -104,13 +107,20 @@
     "use": "Use",
     "using": "Using",
     "buy": "Buy",
-    "notEnoughCookies": "Not enough Cookies"
+    "notEnoughCookies": "Not enough Cookies",
+    "switch": "Design",
+    "select": "Select {{name}}"
   },
   "focus": {
     "fullscreen": "⛶ Full Screen",
     "enter": "Enter full screen",
     "exit": "Exit Full Screen",
     "exitFullscreen": "Exit Full Screen"
+  },
+  "boost": {
+    "total": "Total Boost +{{percent}}%",
+    "active": "Active Boost",
+    "none": "No Boost"
   },
   "developer": {
     "title": "Developer Panel",
