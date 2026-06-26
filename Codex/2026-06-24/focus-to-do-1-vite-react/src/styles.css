@@ -189,6 +189,98 @@ select:focus {
   color: #8a5a00;
 }
 
+.production-debug-panel {
+  position: fixed;
+  right: 14px;
+  bottom: 94px;
+  z-index: 120;
+  width: min(340px, calc(100vw - 28px));
+  color: #e9f3f4;
+  font-size: 0.76rem;
+  pointer-events: none;
+}
+
+.production-debug-toggle,
+.production-debug-body {
+  pointer-events: auto;
+  background: rgba(18, 24, 27, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(12px);
+}
+
+.production-debug-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  float: right;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  color: #e9f3f4;
+  border-radius: 999px;
+}
+
+.production-debug-toggle strong {
+  color: #9ee8ff;
+  letter-spacing: 0;
+}
+
+.production-debug-toggle span {
+  font-weight: 800;
+}
+
+.production-debug-body {
+  clear: both;
+  max-height: min(58vh, 520px);
+  margin-top: 8px;
+  padding: 10px;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+.production-debug-section + .production-debug-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.production-debug-section h2 {
+  margin: 0 0 6px;
+  color: #9ee8ff;
+  font-size: 0.72rem;
+  letter-spacing: 0;
+}
+
+.production-debug-section dl {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.production-debug-row {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.8fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.production-debug-row dt,
+.production-debug-row dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.production-debug-row dt {
+  color: rgba(233, 243, 244, 0.66);
+}
+
+.production-debug-row dd {
+  color: #fff;
+  font-weight: 800;
+}
+
 .secondary-button {
   color: #344145;
   background: #fff;
@@ -1665,6 +1757,16 @@ button:disabled {
   .timer-actions button {
     width: 100%;
   }
+
+  .production-debug-panel {
+    right: 10px;
+    bottom: 86px;
+    width: min(330px, calc(100vw - 20px));
+  }
+
+  .production-debug-body {
+    max-height: 52vh;
+  }
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
@@ -1735,5 +1837,14 @@ button:disabled {
 
   .focus-fullscreen .water-content strong {
     font-size: clamp(3.2rem, 16vh, 7rem);
+  }
+
+  .production-debug-panel {
+    bottom: 12px;
+    width: min(320px, 44vw);
+  }
+
+  .production-debug-body {
+    max-height: calc(100vh - 72px);
   }
 }

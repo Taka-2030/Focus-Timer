@@ -27,6 +27,7 @@ import {
   saveAppData,
   unlockAllTimerDesignsForDebug,
 } from './services/storageService';
+import { getProductionDebugMode } from './services/debugModeService';
 import './styles.css';
 
 const isDeveloperPanelAvailable =
@@ -205,11 +206,23 @@ function App() {
   const [rewardToast, setRewardToast] = React.useState(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [timerAnimationResetKey, setTimerAnimationResetKey] = React.useState(0);
+  const [isProductionDebugEnabled] = React.useState(() => getProductionDebugMode());
+  const [timerDebugFrame, setTimerDebugFrame] = React.useState(null);
+  const [lastTaskDebug, setLastTaskDebug] = React.useState(null);
   const shouldAutoStartRef = React.useRef(false);
 
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
   const activeMode = modes[mode];
   const modeColor = mode === 'work' ? settings.themeColor : activeMode.color;
+  const currentTotalSeconds = minutesToSeconds(settings[modes[mode].settingsKey]);
+
+  const handleTimerDebugFrame = React.useCallback(
+    (frame) => {
+      if (!isProductionDebugEnabled) return;
+      setTimerDebugFrame(frame);
+    },
+    [isProductionDebugEnabled],
+  );
 
   React.useEffect(() => {
     saveAppData({ tasks, sessions, settings, gameState });
@@ -477,6 +490,7 @@ function App() {
             onUpdateTask={updateTask}
             onDeleteTask={deleteTask}
             onSelectTask={setSelectedTaskId}
+            onTaskDebug={isProductionDebugEnabled ? setLastTaskDebug : undefined}
           />
         )}
 
@@ -488,7 +502,7 @@ function App() {
             mode={mode}
             setMode={changeMode}
             secondsLeft={secondsLeft}
-            totalSeconds={minutesToSeconds(settings[modes[mode].settingsKey])}
+            totalSeconds={currentTotalSeconds}
             isRunning={isRunning}
             startTimer={startTimer}
             pauseTimer={pauseTimer}
@@ -502,6 +516,7 @@ function App() {
             onSelectTimerDesign={selectTimerDesign}
             isFullscreen={isFullscreen}
             toggleFullscreen={toggleFullscreen}
+            onTimerDebugFrame={isProductionDebugEnabled ? handleTimerDebugFrame : undefined}
           />
         )}
 
@@ -529,6 +544,20 @@ function App() {
         )}
       </main>
 
+      {isProductionDebugEnabled && (
+        <ProductionDebugPanel
+          timerDesignId={gameState.selectedTimerDesign}
+          mode={mode}
+          isRunning={isRunning}
+          secondsLeft={secondsLeft}
+          totalSeconds={currentTotalSeconds}
+          isFullscreen={isFullscreen}
+          timerDebugFrame={timerDebugFrame}
+          tasksLength={tasks.length}
+          taskDebug={lastTaskDebug}
+        />
+      )}
+
       <nav className="bottom-nav" aria-label={t('nav.main')}>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -549,7 +578,130 @@ function App() {
   );
 }
 
-function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTask, onSelectTask }) {
+function ProductionDebugPanel({
+  timerDesignId,
+  mode,
+  isRunning,
+  secondsLeft,
+  totalSeconds,
+  isFullscreen,
+  timerDebugFrame,
+  tasksLength,
+  taskDebug,
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const fallbackProgress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+  const progress = clamp01(timerDebugFrame?.progress ?? fallbackProgress);
+  const displayedProgress = clamp01(timerDebugFrame?.displayedProgress ?? progress);
+  const remainingTime = Math.max(0, timerDebugFrame?.remainingTime ?? secondsLeft);
+  const elapsedTime = Math.max(0, timerDebugFrame?.elapsedTime ?? totalSeconds - secondsLeft);
+  const waterLevel = progress * 100;
+  const activeClass = `timer-design-${timerDesignId}${
+    isFullscreen ? ` fullscreen-design-${timerDesignId}` : ''
+  }`;
+
+  return (
+    <aside className={`production-debug-panel ${isOpen ? 'expanded' : ''}`}>
+      <button
+        className="production-debug-toggle"
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-expanded={isOpen}
+      >
+        <strong>DEBUG</strong>
+        <span>{timerDesignId}</span>
+        <span>{Math.round(progress * 100)}%</span>
+      </button>
+
+      {isOpen && (
+        <div className="production-debug-body">
+          <ProductionDebugSection title="Timer">
+            <ProductionDebugRow label="selectedTimerDesign" value={timerDesignId} />
+            <ProductionDebugRow label="mode" value={mode} />
+            <ProductionDebugRow label="isRunning" value={String(isRunning)} />
+            <ProductionDebugRow label="remainingTime" value={formatDebugNumber(remainingTime)} />
+            <ProductionDebugRow label="elapsedTime" value={formatDebugNumber(elapsedTime)} />
+            <ProductionDebugRow label="totalTime" value={formatDebugNumber(totalSeconds)} />
+            <ProductionDebugRow label="progress" value={formatDebugNumber(progress)} />
+            <ProductionDebugRow label="isFullscreen" value={String(isFullscreen)} />
+          </ProductionDebugSection>
+
+          <ProductionDebugSection title="Ring">
+            <ProductionDebugRow label="ringProgress" value={formatDebugNumber(progress)} />
+            <ProductionDebugRow label="displayedProgress" value={formatDebugNumber(displayedProgress)} />
+            <ProductionDebugRow label="rafTimestamp" value={formatDebugNumber(timerDebugFrame?.timestamp)} />
+            <ProductionDebugRow label="rafActive" value={String(Boolean(timerDebugFrame?.rafActive))} />
+          </ProductionDebugSection>
+
+          <ProductionDebugSection title="Water">
+            <ProductionDebugRow label="waterLevel" value={`${formatDebugNumber(waterLevel)}%`} />
+            <ProductionDebugRow label="progress" value={formatDebugNumber(progress)} />
+            <ProductionDebugRow
+              label="elapsed / total"
+              value={`${formatDebugNumber(elapsedTime)} / ${formatDebugNumber(totalSeconds)}`}
+            />
+            <ProductionDebugRow label="pausedValueStable" value={String(!isRunning)} />
+          </ProductionDebugSection>
+
+          <ProductionDebugSection title="Flip">
+            <ProductionDebugRow label="fullscreen" value={String(isFullscreen)} />
+            <ProductionDebugRow label="designClass" value={activeClass} />
+            <ProductionDebugRow label="activeCssClass" value={isRunning ? 'flip-timer running' : 'flip-timer'} />
+          </ProductionDebugSection>
+
+          <ProductionDebugSection title="Task">
+            <ProductionDebugRow label="tasks.length" value={tasksLength} />
+            <ProductionDebugRow label="lastAddTaskSource" value={taskDebug?.source ?? '-'} />
+            <ProductionDebugRow label="lastAddTaskResult" value={taskDebug?.status ?? '-'} />
+            <ProductionDebugRow label="lastError" value={taskDebug?.error || '-'} />
+            <ProductionDebugRow
+              label="before -> next"
+              value={taskDebug ? `${taskDebug.tasksLength} -> ${taskDebug.nextTasksLength}` : '-'}
+            />
+            <ProductionDebugRow label="afterRender" value={taskDebug?.afterRenderTasksLength ?? '-'} />
+          </ProductionDebugSection>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function ProductionDebugSection({ title, children }) {
+  return (
+    <section className="production-debug-section">
+      <h2>{title}</h2>
+      <dl>{children}</dl>
+    </section>
+  );
+}
+
+function ProductionDebugRow({ label, value }) {
+  return (
+    <div className="production-debug-row">
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, Number(value) || 0));
+}
+
+function formatDebugNumber(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '-';
+  return Number(value).toFixed(3).replace(/\.?0+$/, '');
+}
+
+function TasksView({
+  tasks,
+  selectedTaskId,
+  onAddTask,
+  onUpdateTask,
+  onDeleteTask,
+  onSelectTask,
+  onTaskDebug,
+}) {
   const { t } = useTranslation();
   const initialDraft = {
     title: '',
@@ -582,18 +734,21 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
   }
 
   React.useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    setTaskDebug((current) => {
+    function withAfterRender(current) {
       if (!current || current.status !== 'task added') return current;
       return { ...current, afterRenderTasksLength: tasks.length };
-    });
-  }, [tasks.length]);
+    }
+
+    onTaskDebug?.((current) => withAfterRender(current));
+    if (import.meta.env.DEV) {
+      setTaskDebug((current) => withAfterRender(current));
+    }
+  }, [tasks.length, onTaskDebug]);
 
   function updateTaskDebug(source, values, status, details = {}) {
-    if (!import.meta.env.DEV) return;
     const beforeLength = details.beforeLength ?? tasks.length;
     const nextLength = details.nextLength ?? beforeLength;
-    setTaskDebug({
+    const debugPayload = {
       source,
       status,
       title: values?.title ?? '',
@@ -604,7 +759,10 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
       newTaskId: details.newTask?.id ?? null,
       error: details.error ?? '',
       time: new Date().toLocaleTimeString(),
-    });
+    };
+    onTaskDebug?.(debugPayload);
+    if (!import.meta.env.DEV) return;
+    setTaskDebug(debugPayload);
   }
 
   function handleAddTask(event, source = event?.type ?? 'manual') {
@@ -820,6 +978,7 @@ function TimerView({
   onSelectTimerDesign,
   isFullscreen,
   toggleFullscreen,
+  onTimerDebugFrame,
 }) {
   const { t } = useTranslation();
   const [showBoostDetails, setShowBoostDetails] = React.useState(false);
@@ -891,6 +1050,7 @@ function TimerView({
         isRunning={isRunning}
         resetKey={timerAnimationResetKey}
         formatTime={formatTime}
+        onDebugFrame={onTimerDebugFrame}
       />
 
       <div className="timer-design-switch" aria-label={t('timerDesign.switch')}>

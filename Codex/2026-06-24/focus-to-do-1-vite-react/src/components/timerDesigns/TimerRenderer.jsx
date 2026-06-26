@@ -24,17 +24,37 @@ export const TIMER_DESIGNS = [
   },
 ];
 
-function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
+function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey, onDebugFrame) {
   const [animatedSeconds, setAnimatedSeconds] = React.useState(secondsLeft);
   const frameRef = React.useRef(null);
   const displayedRef = React.useRef(secondsLeft);
   const endAtRef = React.useRef(null);
+
+  const emitDebugFrame = React.useCallback(
+    (displaySeconds, rafActive, timestamp = performance.now()) => {
+      if (!onDebugFrame) return;
+      const safeSeconds = Math.max(0, Math.min(totalSeconds, displaySeconds));
+      const progress = totalSeconds > 0 ? 1 - safeSeconds / totalSeconds : 0;
+      onDebugFrame({
+        timestamp,
+        rafActive,
+        displayedSeconds: safeSeconds,
+        displayedProgress: progress,
+        progress,
+        elapsedTime: Math.max(0, totalSeconds - safeSeconds),
+        remainingTime: safeSeconds,
+        totalTime: totalSeconds,
+      });
+    },
+    [onDebugFrame, totalSeconds],
+  );
 
   React.useEffect(() => {
     window.cancelAnimationFrame(frameRef.current);
     endAtRef.current = null;
     displayedRef.current = secondsLeft;
     setAnimatedSeconds(secondsLeft);
+    emitDebugFrame(secondsLeft, false);
   }, [resetKey, totalSeconds]);
 
   React.useEffect(() => {
@@ -43,12 +63,14 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
     endAtRef.current = null;
     displayedRef.current = 0;
     setAnimatedSeconds(0);
-  }, [secondsLeft]);
+    emitDebugFrame(0, false);
+  }, [secondsLeft, emitDebugFrame]);
 
   React.useEffect(() => {
     if (!isRunning) {
       window.cancelAnimationFrame(frameRef.current);
       endAtRef.current = null;
+      emitDebugFrame(displayedRef.current, false);
       return undefined;
     }
 
@@ -59,6 +81,7 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
       const nextSeconds = Math.max(0, Math.min(totalSeconds, (endAtRef.current - now) / 1000));
       displayedRef.current = nextSeconds;
       setAnimatedSeconds(nextSeconds);
+      emitDebugFrame(nextSeconds, true, now);
 
       if (nextSeconds > 0) {
         frameRef.current = window.requestAnimationFrame(update);
@@ -79,8 +102,15 @@ function TimerRenderer({
   isRunning,
   resetKey,
   formatTime,
+  onDebugFrame,
 }) {
-  const animatedSeconds = useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey);
+  const animatedSeconds = useAnimatedSeconds(
+    secondsLeft,
+    totalSeconds,
+    isRunning,
+    resetKey,
+    onDebugFrame,
+  );
   const displaySeconds = Math.ceil(animatedSeconds);
   const progress = totalSeconds > 0 ? 1 - animatedSeconds / totalSeconds : 0;
   const sharedProps = {
