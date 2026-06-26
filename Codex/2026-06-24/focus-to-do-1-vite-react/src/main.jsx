@@ -717,7 +717,6 @@ function TimerView({
         totalSeconds={totalSeconds}
         isRunning={isRunning}
         resetKey={timerAnimationResetKey}
-        modeLabel={t(modes[mode].labelKey)}
         formatTime={formatTime}
       />
 

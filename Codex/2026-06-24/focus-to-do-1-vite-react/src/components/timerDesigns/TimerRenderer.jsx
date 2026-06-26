@@ -28,9 +28,11 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
   const [animatedSeconds, setAnimatedSeconds] = React.useState(secondsLeft);
   const frameRef = React.useRef(null);
   const displayedRef = React.useRef(secondsLeft);
+  const endAtRef = React.useRef(null);
 
   React.useEffect(() => {
     window.cancelAnimationFrame(frameRef.current);
+    endAtRef.current = null;
     displayedRef.current = secondsLeft;
     setAnimatedSeconds(secondsLeft);
   }, [resetKey, totalSeconds]);
@@ -38,15 +40,15 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
   React.useEffect(() => {
     if (!isRunning) {
       window.cancelAnimationFrame(frameRef.current);
+      endAtRef.current = null;
       return undefined;
     }
 
-    const startedAt = performance.now();
-    const baseSeconds = Math.min(displayedRef.current, secondsLeft);
+    const startSeconds = Math.min(displayedRef.current, secondsLeft);
+    endAtRef.current = performance.now() + startSeconds * 1000;
 
     function update(now) {
-      const elapsedSeconds = (now - startedAt) / 1000;
-      const nextSeconds = Math.max(0, Math.min(totalSeconds, baseSeconds - elapsedSeconds));
+      const nextSeconds = Math.max(0, Math.min(totalSeconds, (endAtRef.current - now) / 1000));
       displayedRef.current = nextSeconds;
       setAnimatedSeconds(nextSeconds);
 
@@ -57,7 +59,7 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
 
     frameRef.current = window.requestAnimationFrame(update);
     return () => window.cancelAnimationFrame(frameRef.current);
-  }, [isRunning, secondsLeft, totalSeconds]);
+  }, [isRunning, totalSeconds]);
 
   return Math.max(0, Math.min(totalSeconds, animatedSeconds));
 }
@@ -68,7 +70,6 @@ function TimerRenderer({
   totalSeconds,
   isRunning,
   resetKey,
-  modeLabel,
   formatTime,
 }) {
   const animatedSeconds = useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey);
@@ -79,7 +80,6 @@ function TimerRenderer({
     totalSeconds,
     progress,
     isRunning,
-    modeLabel,
     formattedTime: formatTime(displaySeconds),
   };
 

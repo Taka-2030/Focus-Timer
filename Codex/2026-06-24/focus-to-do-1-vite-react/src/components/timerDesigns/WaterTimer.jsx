@@ -1,4 +1,4 @@
-function WaterTimer({ progress, modeLabel, formattedTime }) {
+function WaterTimer({ progress, formattedTime }) {
   const waterLevel = Math.max(0, Math.min(100, progress * 100));
 
   return (
@@ -11,7 +11,6 @@ function WaterTimer({ progress, modeLabel, formattedTime }) {
         </div>
         <div className="water-shine" />
         <div className="water-content">
-          <span className="timer-label">{modeLabel}</span>
           <strong>{formattedTime}</strong>
         </div>
       </div>

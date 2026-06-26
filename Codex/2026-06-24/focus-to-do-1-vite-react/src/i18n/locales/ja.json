@@ -46,7 +46,7 @@
   },
   "timer": {
     "mode": "タイマーモード",
-    "work": "作業",
+    "work": "Focus",
     "shortBreak": "短い休憩",
     "longBreak": "長い休憩",
     "focusTask": "集中するタスク",

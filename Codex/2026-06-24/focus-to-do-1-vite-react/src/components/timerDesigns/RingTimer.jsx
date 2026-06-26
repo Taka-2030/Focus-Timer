@@ -1,5 +1,4 @@
-function RingTimer({ secondsLeft, totalSeconds, modeLabel, formattedTime }) {
-  const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
+function RingTimer({ progress, formattedTime }) {
   const radius = 132;
   const circumference = 2 * Math.PI * radius;
   const strokeOffset = circumference * (1 - progress);
@@ -18,7 +17,6 @@ function RingTimer({ secondsLeft, totalSeconds, modeLabel, formattedTime }) {
         />
       </svg>
       <div className="timer-face">
-        <span className="timer-label">{modeLabel}</span>
         <strong>{formattedTime}</strong>
       </div>
     </div>

@@ -811,8 +811,12 @@ select:focus {
 }
 
 .focus-fullscreen .timer-ring {
-  width: min(74vmin, 560px);
+  width: min(80vmin, 680px);
   max-width: 88vw;
+}
+
+.focus-fullscreen .timer-face strong {
+  font-size: clamp(4.5rem, 14vw, 11rem);
 }
 
 .focus-fullscreen .timer-actions {
@@ -860,6 +864,7 @@ select:focus {
 
 .focus-fullscreen .water-content strong {
   color: #162c36;
+  font-size: clamp(4.8rem, 15vw, 12rem);
   text-shadow: 0 12px 34px rgba(120, 190, 210, 0.24);
 }
 
@@ -896,12 +901,24 @@ select:focus {
 }
 
 .focus-fullscreen .flip-timer {
-  width: min(88vw, 660px);
+  width: min(92vw, 980px);
   padding: clamp(18px, 4vw, 34px);
   background: transparent;
   border-color: transparent;
   box-shadow: none;
   transform: scale(1.08);
+}
+
+.focus-fullscreen .flip-card {
+  width: min(31vw, 300px);
+}
+
+.focus-fullscreen .flip-card span {
+  font-size: clamp(4rem, 14vw, 11rem);
+}
+
+.focus-fullscreen .flip-separator {
+  font-size: clamp(3.2rem, 9vw, 8rem);
 }
 
 .stats-grid {
@@ -1576,12 +1593,24 @@ button:disabled {
   }
 
   .focus-fullscreen .timer-ring {
-    width: min(70vh, 360px);
+    width: min(78vh, 440px);
+  }
+
+  .focus-fullscreen .timer-face strong {
+    font-size: clamp(3.2rem, 13vh, 7rem);
   }
 
   .focus-fullscreen .flip-timer {
-    width: min(54vw, 460px);
+    width: min(56vw, 620px);
     transform: none;
+  }
+
+  .focus-fullscreen .flip-card {
+    width: min(17vw, 170px);
+  }
+
+  .focus-fullscreen .flip-card span {
+    font-size: clamp(3rem, 13vh, 6rem);
   }
 
   .focus-fullscreen .timer-actions,
@@ -1606,6 +1635,6 @@ button:disabled {
   }
 
   .focus-fullscreen .water-content strong {
-    font-size: clamp(3rem, 12vw, 5.8rem);
+    font-size: clamp(3.2rem, 16vh, 7rem);
   }
 }
