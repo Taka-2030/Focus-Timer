@@ -38,6 +38,14 @@ function useAnimatedSeconds(secondsLeft, totalSeconds, isRunning, resetKey) {
   }, [resetKey, totalSeconds]);
 
   React.useEffect(() => {
+    if (secondsLeft > 0) return;
+    window.cancelAnimationFrame(frameRef.current);
+    endAtRef.current = null;
+    displayedRef.current = 0;
+    setAnimatedSeconds(0);
+  }, [secondsLeft]);
+
+  React.useEffect(() => {
     if (!isRunning) {
       window.cancelAnimationFrame(frameRef.current);
       endAtRef.current = null;
