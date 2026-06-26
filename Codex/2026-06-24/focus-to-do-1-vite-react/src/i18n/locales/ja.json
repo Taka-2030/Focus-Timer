@@ -107,6 +107,14 @@
     "buy": "購入",
     "notEnoughCookies": "Cookies不足"
   },
+  "focus": {
+    "fullscreen": "⛶ Full Screen",
+    "enter": "全画面に入る",
+    "exit": "全画面を解除",
+    "mode": "Focus Mode",
+    "enabled": "ONにするとタイマー画面で全画面集中表示を使えます",
+    "noActiveBoosts": "有効なBoostなし"
+  },
   "developer": {
     "title": "Developer Panel",
     "mode": "Developer Mode",

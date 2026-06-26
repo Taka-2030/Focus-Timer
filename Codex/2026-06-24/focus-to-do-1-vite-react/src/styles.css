@@ -368,7 +368,8 @@ select:focus {
 .ring-progress {
   stroke: currentColor;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.35s ease;
+  transition: stroke-dashoffset 0.26s linear;
+  will-change: stroke-dashoffset;
 }
 
 .timer-face {
@@ -487,19 +488,32 @@ select:focus {
   right: 0;
   bottom: 0;
   left: 0;
-  background: linear-gradient(180deg, rgba(116, 200, 220, 0.72), rgba(66, 150, 185, 0.84));
-  transition: height 0.35s ease;
+  background: linear-gradient(180deg, rgba(126, 208, 226, 0.58), rgba(60, 148, 184, 0.76));
+  transition: height 1.05s linear;
+  will-change: height;
 }
 
 .water-fill::before {
   position: absolute;
-  top: -13px;
-  left: -8%;
-  width: 116%;
-  height: 26px;
+  top: -15px;
+  left: -14%;
+  width: 128%;
+  height: 30px;
   content: "";
-  background: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.24);
   border-radius: 50%;
+  animation: water-wave 5.8s ease-in-out infinite;
+}
+
+@keyframes water-wave {
+  0%,
+  100% {
+    transform: translateX(-3%) scaleX(1.02);
+  }
+
+  50% {
+    transform: translateX(3%) scaleX(0.98);
+  }
 }
 
 .water-shine {
@@ -543,6 +557,92 @@ select:focus {
   color: #657174;
   font-size: 0.84rem;
   font-weight: 800;
+}
+
+.fullscreen-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 14px;
+  color: #344145;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(36, 48, 51, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(44, 38, 31, 0.08);
+}
+
+.focus-context {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: min(560px, 100%);
+}
+
+.focus-context span {
+  padding: 7px 10px;
+  color: #526063;
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(36, 48, 51, 0.08);
+  border-radius: 999px;
+}
+
+.focus-fullscreen {
+  min-height: 100vh;
+  padding: 34px 22px;
+  color: #f7f8f7;
+  background:
+    radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--mode-color) 18%, transparent), transparent 36%),
+    #151719;
+}
+
+.focus-fullscreen .shell {
+  min-height: calc(100vh - 68px);
+  display: grid;
+  place-items: center;
+}
+
+.focus-fullscreen .topbar,
+.focus-fullscreen .bottom-nav,
+.focus-fullscreen .mode-tabs,
+.focus-fullscreen .task-select,
+.focus-fullscreen .sound-note,
+.focus-fullscreen .timer-actions {
+  display: none;
+}
+
+.focus-fullscreen .timer-view {
+  width: min(760px, 100%);
+  gap: 26px;
+  padding: 0;
+}
+
+.focus-fullscreen .fullscreen-button {
+  color: #f6f7f5;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.focus-fullscreen .cookie-bank,
+.focus-fullscreen .focus-context span {
+  color: #f5efe1;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.focus-fullscreen .timer-ring,
+.focus-fullscreen .water-timer {
+  width: min(74vh, 520px);
+  max-width: 88vw;
+}
+
+.focus-fullscreen .flip-timer {
+  width: min(88vw, 660px);
+  transform: scale(1.08);
 }
 
 .stats-grid {

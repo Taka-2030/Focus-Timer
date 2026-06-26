@@ -175,6 +175,7 @@ function App() {
   const [isRunning, setIsRunning] = React.useState(false);
   const [audioReady, setAudioReady] = React.useState(false);
   const [rewardToast, setRewardToast] = React.useState(null);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
   const shouldAutoStartRef = React.useRef(false);
 
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
@@ -188,6 +189,15 @@ function App() {
   React.useEffect(() => {
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
+
+  React.useEffect(() => {
+    function syncFullscreenState() {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    }
+
+    document.addEventListener('fullscreenchange', syncFullscreenState);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreenState);
+  }, []);
 
   React.useEffect(() => {
     if (!rewardToast) return undefined;
@@ -340,6 +350,14 @@ function App() {
     setSecondsLeft(minutesToSeconds(settings[modes[mode].settingsKey]));
   }
 
+  async function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+    await document.documentElement.requestFullscreen();
+  }
+
   function buyItem(item) {
     if (gameState.cookies < item.price) return;
     setGameState((current) => ({
@@ -380,7 +398,10 @@ function App() {
   }
 
   return (
-    <div className="app" style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}>
+    <div
+      className={`app ${isFullscreen ? 'focus-fullscreen' : ''}`}
+      style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}
+    >
       <main className="shell">
         <header className="topbar">
           <div>
@@ -423,6 +444,10 @@ function App() {
             audioReady={audioReady}
             gameState={gameState}
             rewardToast={rewardToast}
+            selectedTask={selectedTask}
+            focusMode={settings.focusMode}
+            isFullscreen={isFullscreen}
+            toggleFullscreen={toggleFullscreen}
           />
         )}
 
@@ -591,13 +616,29 @@ function TimerView({
   audioReady,
   gameState,
   rewardToast,
+  selectedTask,
+  focusMode,
+  isFullscreen,
+  toggleFullscreen,
 }) {
   const { t } = useTranslation();
+  const activeBoosts = getActiveBoosts(gameState, t);
 
   return (
     <section className="timer-view">
+      {focusMode && (
+        <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
+          {isFullscreen ? t('focus.exit') : t('focus.fullscreen')}
+        </button>
+      )}
       <div className="cookie-bank">
         🍪 {formatCookies(gameState.cookies)} {t('app.cookies')}
+      </div>
+      <div className="focus-context">
+        <span>{selectedTask ? selectedTask.title : t('app.noTask')}</span>
+        <span>
+          {activeBoosts.length > 0 ? activeBoosts.join(' / ') : t('focus.noActiveBoosts')}
+        </span>
       </div>
       {rewardToast && (
         <div className="reward-toast" key={rewardToast.id}>
@@ -658,6 +699,16 @@ function TimerView({
       </div>
     </section>
   );
+}
+
+function getActiveBoosts(gameState, t) {
+  const boosts = [];
+  if (hasUpgrade(gameState, 'focusBoost1')) boosts.push(t('shop.focusBoost1'));
+  if (hasUpgrade(gameState, 'streakBonus')) boosts.push(t('shop.streakBonus'));
+  if (hasUpgrade(gameState, 'morningBoost') && new Date().getHours() < 12) {
+    boosts.push(t('shop.morningBoost'));
+  }
+  return boosts;
 }
 
 function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSelectTimerDesign }) {
@@ -1013,6 +1064,12 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage, game
           onChange={(event) => updateSetting('themeColor', event.target.value)}
         />
       </label>
+      <ToggleSetting
+        label={t('focus.mode')}
+        description={t('focus.enabled')}
+        checked={settings.focusMode}
+        onChange={(checked) => updateSetting('focusMode', checked)}
+      />
       {isDeveloperPanelAvailable && (
         <>
           <ToggleSetting

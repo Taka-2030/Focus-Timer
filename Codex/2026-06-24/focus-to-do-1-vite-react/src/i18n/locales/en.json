@@ -107,6 +107,14 @@
     "buy": "Buy",
     "notEnoughCookies": "Not enough Cookies"
   },
+  "focus": {
+    "fullscreen": "⛶ Full Screen",
+    "enter": "Enter full screen",
+    "exit": "Exit Full Screen",
+    "mode": "Focus Mode",
+    "enabled": "Show a full-screen focus option on the timer screen",
+    "noActiveBoosts": "No active Boosts"
+  },
   "developer": {
     "title": "Developer Panel",
     "mode": "Developer Mode",
