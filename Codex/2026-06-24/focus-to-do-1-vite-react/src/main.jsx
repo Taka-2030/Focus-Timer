@@ -15,6 +15,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import ToggleSwitch from './components/ToggleSwitch';
+import TimerRenderer, { TIMER_DESIGNS } from './components/timerDesigns/TimerRenderer';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { loadAppData, saveAppData } from './services/storageService';
@@ -349,6 +350,24 @@ function App() {
     }));
   }
 
+  function buyTimerDesign(design) {
+    if (gameState.cookies < design.price || gameState.ownedTimerDesigns.includes(design.id)) return;
+    setGameState((current) => ({
+      ...current,
+      cookies: current.cookies - design.price,
+      ownedTimerDesigns: Array.from(new Set([...current.ownedTimerDesigns, design.id])),
+      selectedTimerDesign: design.id,
+    }));
+  }
+
+  function selectTimerDesign(designId) {
+    if (!gameState.ownedTimerDesigns.includes(designId)) return;
+    setGameState((current) => ({
+      ...current,
+      selectedTimerDesign: designId,
+    }));
+  }
+
   return (
     <div className="app" style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}>
       <main className="shell">
@@ -397,7 +416,13 @@ function App() {
         )}
 
         {activeView === 'shop' && (
-          <ShopView gameState={gameState} onBuyItem={buyItem} onBuyUpgrade={buyUpgrade} />
+          <ShopView
+            gameState={gameState}
+            onBuyItem={buyItem}
+            onBuyUpgrade={buyUpgrade}
+            onBuyTimerDesign={buyTimerDesign}
+            onSelectTimerDesign={selectTimerDesign}
+          />
         )}
 
         {activeView === 'stats' && <StatsView tasks={tasks} sessions={sessions} gameState={gameState} />}
@@ -412,7 +437,7 @@ function App() {
         )}
       </main>
 
-      <nav className="bottom-nav" aria-label="Main navigation">
+      <nav className="bottom-nav" aria-label={t('nav.main')}>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -555,10 +580,6 @@ function TimerView({
   rewardToast,
 }) {
   const { t } = useTranslation();
-  const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
-  const radius = 132;
-  const circumference = 2 * Math.PI * radius;
-  const strokeOffset = circumference * (1 - progress);
 
   return (
     <section className="timer-view">
@@ -584,24 +605,14 @@ function TimerView({
         ))}
       </div>
 
-      <div className={`timer-ring ${mode}`}>
-        <svg viewBox="0 0 320 320" aria-hidden="true">
-          <circle className="ring-track" cx="160" cy="160" r={radius} />
-          <circle
-            className="ring-progress"
-            cx="160"
-            cy="160"
-            r={radius}
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeOffset}
-          />
-        </svg>
-        <div className="timer-face">
-          <span className="timer-label">{t(modes[mode].labelKey)}</span>
-          <strong>{formatTime(secondsLeft)}</strong>
-          <span className="timer-status">{isRunning ? t('timer.focusing') : t('timer.ready')}</span>
-        </div>
-      </div>
+      <TimerRenderer
+        timerDesignId={gameState.selectedTimerDesign}
+        secondsLeft={secondsLeft}
+        totalSeconds={totalSeconds}
+        modeLabel={t(modes[mode].labelKey)}
+        statusLabel={isRunning ? t('timer.focusing') : t('timer.ready')}
+        formatTime={formatTime}
+      />
 
       <label className="task-select">
         {t('timer.focusTask')}
@@ -636,7 +647,7 @@ function TimerView({
   );
 }
 
-function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
+function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSelectTimerDesign }) {
   const { t } = useTranslation();
   return (
     <section className="view-stack">
@@ -707,7 +718,75 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
           })}
         </div>
       </div>
+
+      <div className="shop-section">
+        <h2>{t('timerDesign.title')}</h2>
+        <div className="shop-grid timer-design-grid">
+          {TIMER_DESIGNS.map((design) => {
+            const owned = gameState.ownedTimerDesigns.includes(design.id);
+            const using = gameState.selectedTimerDesign === design.id;
+            const canBuy = gameState.cookies >= design.price && !owned;
+
+            return (
+              <article className={`shop-card timer-design-card ${using ? 'using' : ''}`} key={design.id}>
+                <TimerDesignPreview designId={design.id} />
+                <div>
+                  <h3>{t(design.nameKey)}</h3>
+                  <p>{t(design.descriptionKey)}</p>
+                </div>
+                <div className="shop-meta">
+                  <span>{t('common.price')}: 🍪 {design.price.toLocaleString()}</span>
+                  {owned && <span>{using ? t('timerDesign.using') : t('timerDesign.owned')}</span>}
+                  {!owned && !canBuy && <span>{t('timerDesign.notEnoughCookies')}</span>}
+                </div>
+                {owned ? (
+                  <button
+                    className={using ? 'secondary-button' : 'primary-button'}
+                    type="button"
+                    disabled={using}
+                    onClick={() => onSelectTimerDesign(design.id)}
+                  >
+                    {using ? t('timerDesign.using') : t('timerDesign.use')}
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={!canBuy}
+                    onClick={() => onBuyTimerDesign(design)}
+                  >
+                    {canBuy ? t('timerDesign.buy') : t('timerDesign.notEnoughCookies')}
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </section>
+  );
+}
+
+function TimerDesignPreview({ designId }) {
+  return (
+    <div className={`timer-design-preview preview-${designId}`} aria-hidden="true">
+      {designId === 'flip' && (
+        <div className="preview-flip">
+          <span>25</span>
+          <span>00</span>
+        </div>
+      )}
+      {designId === 'water' && (
+        <div className="preview-water">
+          <span />
+        </div>
+      )}
+      {designId === 'ring' && (
+        <div className="preview-ring">
+          <span />
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -9,7 +9,8 @@
     "timer": "Timer",
     "shop": "Shop",
     "stats": "Stats",
-    "settings": "Settings"
+    "settings": "Settings",
+    "main": "Main navigation"
   },
   "common": {
     "add": "Add",
@@ -85,6 +86,26 @@
     "streakBonusEffect": "Every 3-work-session streak gives +30%",
     "morningBoost": "Morning Boost",
     "morningBoostEffect": "Morning work rewards +20%"
+  },
+  "timerDesign": {
+    "title": "Timer Designs",
+    "ring": {
+      "name": "Ring Timer",
+      "description": "The default ring timer, showing focus progress in a circular ring."
+    },
+    "flip": {
+      "name": "Flip Clock Timer",
+      "description": "A flip-clock inspired timer with a dark background and large number cards."
+    },
+    "water": {
+      "name": "Water Timer",
+      "description": "A calm water-level timer that rises with elapsed focus time."
+    },
+    "owned": "Owned",
+    "use": "Use",
+    "using": "Using",
+    "buy": "Buy",
+    "notEnoughCookies": "Not enough Cookies"
   },
   "settings": {
     "workTime": "Work time",

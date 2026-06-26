@@ -400,6 +400,131 @@ select:focus {
   font-weight: 800;
 }
 
+.flip-timer {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(86vw, 460px);
+  padding: 26px 20px;
+  color: #f9faf9;
+  background: #17191c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 26px 58px rgba(23, 25, 28, 0.24);
+}
+
+.flip-timer .timer-label,
+.flip-timer .timer-status {
+  color: #cfd5d7;
+}
+
+.flip-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 3vw, 14px);
+  width: 100%;
+}
+
+.flip-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(34vw, 160px);
+  aspect-ratio: 1.05;
+  overflow: hidden;
+  color: #fdfdfb;
+  background: linear-gradient(180deg, #2d3035 0 49%, #22252a 50% 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 14px 34px rgba(0, 0, 0, 0.28);
+}
+
+.flip-card::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 50%;
+  height: 1px;
+  content: "";
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.flip-card span {
+  font-size: clamp(3.4rem, 15vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.flip-separator {
+  color: #d7dcde;
+  font-size: clamp(2.4rem, 9vw, 4.4rem);
+  font-weight: 900;
+}
+
+.water-timer {
+  display: grid;
+  place-items: center;
+  width: min(78vw, 380px);
+  aspect-ratio: 1;
+}
+
+.water-vessel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.9);
+  border: 12px solid rgba(36, 48, 51, 0.1);
+  border-radius: 50%;
+  box-shadow: 0 26px 58px rgba(55, 119, 148, 0.18);
+}
+
+.water-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(180deg, rgba(116, 200, 220, 0.72), rgba(66, 150, 185, 0.84));
+  transition: height 0.35s ease;
+}
+
+.water-fill::before {
+  position: absolute;
+  top: -13px;
+  left: -8%;
+  width: 116%;
+  height: 26px;
+  content: "";
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 50%;
+}
+
+.water-shine {
+  position: absolute;
+  inset: 18%;
+  border-top: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+.water-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  color: #243033;
+  text-align: center;
+}
+
+.water-content strong {
+  font-size: clamp(3rem, 13vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
 .task-select {
   width: min(520px, 100%);
 }
@@ -652,6 +777,11 @@ select:focus {
   background: color-mix(in srgb, var(--theme) 8%, #fff);
 }
 
+.timer-design-card.using {
+  border-color: color-mix(in srgb, var(--theme) 45%, rgba(36, 48, 51, 0.08));
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--theme) 16%, transparent);
+}
+
 .shop-card h3 {
   margin: 0 0 6px;
   color: #263235;
@@ -678,6 +808,66 @@ select:focus {
   font-weight: 800;
   background: rgba(36, 48, 51, 0.06);
   border-radius: 999px;
+}
+
+.timer-design-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.timer-design-preview {
+  display: grid;
+  place-items: center;
+  height: 128px;
+  overflow: hidden;
+  background: rgba(36, 48, 51, 0.04);
+  border-radius: 8px;
+}
+
+.preview-ring span {
+  width: 86px;
+  aspect-ratio: 1;
+  border: 12px solid rgba(36, 48, 51, 0.12);
+  border-top-color: var(--theme);
+  border-radius: 50%;
+}
+
+.preview-flip {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  background: #17191c;
+  border-radius: 8px;
+}
+
+.preview-flip span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 58px;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #2d3035 0 49%, #22252a 50% 100%);
+  border-radius: 6px;
+}
+
+.preview-water {
+  position: relative;
+  width: 88px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #fff;
+  border: 8px solid rgba(36, 48, 51, 0.1);
+  border-radius: 50%;
+}
+
+.preview-water span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 55%;
+  background: linear-gradient(180deg, rgba(116, 200, 220, 0.72), rgba(66, 150, 185, 0.84));
 }
 
 button:disabled {
@@ -846,6 +1036,10 @@ button:disabled {
   }
 
   .shop-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timer-design-grid {
     grid-template-columns: 1fr;
   }
 

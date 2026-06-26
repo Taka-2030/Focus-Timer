@@ -9,7 +9,8 @@
     "timer": "タイマー",
     "shop": "ショップ",
     "stats": "統計",
-    "settings": "設定"
+    "settings": "設定",
+    "main": "メインナビゲーション"
   },
   "common": {
     "add": "追加",
@@ -85,6 +86,26 @@
     "streakBonusEffect": "連続3ポモドーロ達成ごとに報酬 +30%",
     "morningBoost": "Morning Boost",
     "morningBoostEffect": "午前中の作業完了報酬 +20%"
+  },
+  "timerDesign": {
+    "title": "Timer Designs",
+    "ring": {
+      "name": "Ring Timer",
+      "description": "現在のリング型タイマー。集中の進み具合を円形リングで表示します。"
+    },
+    "flip": {
+      "name": "Flip Clock Timer",
+      "description": "黒背景と大きな数字カードで表示するフリップクロック風タイマー。"
+    },
+    "water": {
+      "name": "Water Timer",
+      "description": "経過時間に応じて水位が上がる、落ち着いた水面デザイン。"
+    },
+    "owned": "所持済み",
+    "use": "使用する",
+    "using": "使用中",
+    "buy": "購入",
+    "notEnoughCookies": "Cookies不足"
   },
   "settings": {
     "workTime": "作業時間",

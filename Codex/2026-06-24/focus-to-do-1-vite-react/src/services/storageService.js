@@ -18,6 +18,8 @@ export const defaultGameState = {
   purchasedUpgrades: [],
   currentStreak: 0,
   totalCookiesEarned: 0,
+  selectedTimerDesign: 'ring',
+  ownedTimerDesigns: ['ring'],
 };
 
 const defaultData = {
@@ -93,8 +95,15 @@ function normalizeAppData(data) {
       purchasedUpgrades: Array.isArray(data?.gameState?.purchasedUpgrades)
         ? data.gameState.purchasedUpgrades
         : [],
+      selectedTimerDesign: data?.gameState?.selectedTimerDesign || 'ring',
+      ownedTimerDesigns: normalizeOwnedTimerDesigns(data?.gameState?.ownedTimerDesigns),
     },
   };
+}
+
+function normalizeOwnedTimerDesigns(ownedTimerDesigns) {
+  const owned = Array.isArray(ownedTimerDesigns) ? ownedTimerDesigns : [];
+  return Array.from(new Set(['ring', ...owned]));
 }
 
 function getInitialLanguage() {
