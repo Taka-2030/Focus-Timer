@@ -107,6 +107,34 @@
     "buy": "Buy",
     "notEnoughCookies": "Not enough Cookies"
   },
+  "developer": {
+    "title": "Developer Panel",
+    "mode": "Developer Mode",
+    "addCookies": "Cookies",
+    "add100Cookies": "Add 100 Cookies",
+    "add1000Cookies": "Add 1,000 Cookies",
+    "add10000Cookies": "Add 10,000 Cookies",
+    "setCookiesZero": "Set Cookies to 0",
+    "unlockAllTimerDesigns": "Unlock All Timer Designs",
+    "resetTimerDesigns": "Reset Timer Designs",
+    "resetGameState": "Reset Game State",
+    "debugState": "Debug State",
+    "onlyDevelopment": "Development only",
+    "timerDesignTools": "Timer Design Tools",
+    "gameStateTools": "Game State Tools",
+    "confirmSetCookiesZero": "Set Cookies to 0?",
+    "confirmResetTimerDesigns": "Reset Timer Designs to Ring only?",
+    "confirmResetGameState": "Reset the full game state?",
+    "state": {
+      "cookies": "cookies",
+      "totalCookiesEarned": "totalCookiesEarned",
+      "currentStreak": "currentStreak",
+      "selectedTimerDesign": "selectedTimerDesign",
+      "ownedTimerDesigns": "ownedTimerDesigns",
+      "purchasedItems": "purchasedItems",
+      "purchasedUpgrades": "purchasedUpgrades"
+    }
+  },
   "settings": {
     "workTime": "Work time",
     "shortBreak": "Short break",

@@ -107,6 +107,34 @@
     "buy": "購入",
     "notEnoughCookies": "Cookies不足"
   },
+  "developer": {
+    "title": "Developer Panel",
+    "mode": "Developer Mode",
+    "addCookies": "Cookies操作",
+    "add100Cookies": "Add 100 Cookies",
+    "add1000Cookies": "Add 1,000 Cookies",
+    "add10000Cookies": "Add 10,000 Cookies",
+    "setCookiesZero": "Set Cookies to 0",
+    "unlockAllTimerDesigns": "Unlock All Timer Designs",
+    "resetTimerDesigns": "Reset Timer Designs",
+    "resetGameState": "Reset Game State",
+    "debugState": "Debug表示",
+    "onlyDevelopment": "開発環境専用",
+    "timerDesignTools": "Timer Design操作",
+    "gameStateTools": "Game State操作",
+    "confirmSetCookiesZero": "Cookiesを0にします。よろしいですか？",
+    "confirmResetTimerDesigns": "Timer DesignsをRingのみ所持に戻します。よろしいですか？",
+    "confirmResetGameState": "ゲーム状態を初期化します。よろしいですか？",
+    "state": {
+      "cookies": "cookies",
+      "totalCookiesEarned": "totalCookiesEarned",
+      "currentStreak": "currentStreak",
+      "selectedTimerDesign": "selectedTimerDesign",
+      "ownedTimerDesigns": "ownedTimerDesigns",
+      "purchasedItems": "purchasedItems",
+      "purchasedUpgrades": "purchasedUpgrades"
+    }
+  },
   "settings": {
     "workTime": "作業時間",
     "shortBreak": "短い休憩",

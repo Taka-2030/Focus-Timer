@@ -18,8 +18,19 @@ import ToggleSwitch from './components/ToggleSwitch';
 import TimerRenderer, { TIMER_DESIGNS } from './components/timerDesigns/TimerRenderer';
 import './i18n';
 import { useTranslation } from 'react-i18next';
-import { loadAppData, saveAppData } from './services/storageService';
+import {
+  addCookiesForDebug,
+  loadAppData,
+  resetCookiesForDebug,
+  resetGameStateForDebug,
+  resetTimerDesignsForDebug,
+  saveAppData,
+  unlockAllTimerDesignsForDebug,
+} from './services/storageService';
 import './styles.css';
+
+const isDeveloperPanelAvailable =
+  import.meta.env.DEV === true || import.meta.env.VITE_ENABLE_DEV_PANEL === 'true';
 
 const shopItems = [
   { id: 'pencil', nameKey: 'shop.pencil', price: 10, bonus: 1 },
@@ -433,6 +444,8 @@ function App() {
             setSettings={setSettings}
             resetTimer={resetTimer}
             currentLanguage={i18n.language}
+            gameState={gameState}
+            setGameState={setGameState}
           />
         )}
       </main>
@@ -916,7 +929,7 @@ function LineStatsChart({ data }) {
   );
 }
 
-function SettingsView({ settings, setSettings, resetTimer, currentLanguage }) {
+function SettingsView({ settings, setSettings, resetTimer, currentLanguage, gameState, setGameState }) {
   const { t, i18n } = useTranslation();
   function updateSetting(key, value) {
     setSettings((current) => ({ ...current, [key]: value }));
@@ -1000,7 +1013,114 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage }) {
           onChange={(event) => updateSetting('themeColor', event.target.value)}
         />
       </label>
+      {isDeveloperPanelAvailable && (
+        <>
+          <ToggleSetting
+            label={t('developer.mode')}
+            description={t('developer.onlyDevelopment')}
+            checked={settings.developerMode}
+            onChange={(checked) => updateSetting('developerMode', checked)}
+          />
+          {settings.developerMode && (
+            <DeveloperPanel gameState={gameState} setGameState={setGameState} />
+          )}
+        </>
+      )}
     </section>
+  );
+}
+
+function DeveloperPanel({ gameState, setGameState }) {
+  const { t } = useTranslation();
+
+  function confirmAndRun(messageKey, action) {
+    if (window.confirm(t(messageKey))) {
+      setGameState(action(gameState));
+    }
+  }
+
+  return (
+    <section className="developer-panel">
+      <div className="developer-heading">
+        <h2>{t('developer.title')}</h2>
+        <span>{t('developer.onlyDevelopment')}</span>
+      </div>
+
+      <div className="developer-section">
+        <h3>{t('developer.addCookies')}</h3>
+        <div className="developer-actions">
+          <button type="button" className="secondary-button" onClick={() => setGameState(addCookiesForDebug(100, gameState))}>
+            {t('developer.add100Cookies')}
+          </button>
+          <button type="button" className="secondary-button" onClick={() => setGameState(addCookiesForDebug(1000, gameState))}>
+            {t('developer.add1000Cookies')}
+          </button>
+          <button type="button" className="secondary-button" onClick={() => setGameState(addCookiesForDebug(10000, gameState))}>
+            {t('developer.add10000Cookies')}
+          </button>
+          <button
+            type="button"
+            className="danger-button"
+            onClick={() => confirmAndRun('developer.confirmSetCookiesZero', resetCookiesForDebug)}
+          >
+            {t('developer.setCookiesZero')}
+          </button>
+        </div>
+      </div>
+
+      <div className="developer-section">
+        <h3>{t('developer.timerDesignTools')}</h3>
+        <div className="developer-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setGameState(unlockAllTimerDesignsForDebug(gameState))}
+          >
+            {t('developer.unlockAllTimerDesigns')}
+          </button>
+          <button
+            type="button"
+            className="danger-button"
+            onClick={() => confirmAndRun('developer.confirmResetTimerDesigns', resetTimerDesignsForDebug)}
+          >
+            {t('developer.resetTimerDesigns')}
+          </button>
+        </div>
+      </div>
+
+      <div className="developer-section">
+        <h3>{t('developer.gameStateTools')}</h3>
+        <button
+          type="button"
+          className="danger-button"
+          onClick={() => confirmAndRun('developer.confirmResetGameState', resetGameStateForDebug)}
+        >
+          {t('developer.resetGameState')}
+        </button>
+      </div>
+
+      <div className="developer-section">
+        <h3>{t('developer.debugState')}</h3>
+        <dl className="debug-state">
+          <DebugRow label={t('developer.state.cookies')} value={formatCookies(gameState.cookies)} />
+          <DebugRow label={t('developer.state.totalCookiesEarned')} value={formatCookies(gameState.totalCookiesEarned)} />
+          <DebugRow label={t('developer.state.currentStreak')} value={gameState.currentStreak} />
+          <DebugRow label={t('developer.state.selectedTimerDesign')} value={gameState.selectedTimerDesign} />
+          <DebugRow label={t('developer.state.ownedTimerDesigns')} value={JSON.stringify(gameState.ownedTimerDesigns)} />
+          <DebugRow label={t('developer.state.purchasedItems')} value={JSON.stringify(gameState.purchasedItems)} />
+          <DebugRow label={t('developer.state.purchasedUpgrades')} value={JSON.stringify(gameState.purchasedUpgrades)} />
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function DebugRow({ label, value }) {
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </>
   );
 }
 

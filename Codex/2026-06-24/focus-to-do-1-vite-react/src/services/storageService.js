@@ -10,6 +10,7 @@ export const defaultSettings = {
   startSoundEnabled: true,
   volume: 0.65,
   language: getInitialLanguage(),
+  developerMode: false,
 };
 
 export const defaultGameState = {
@@ -76,6 +77,50 @@ export function loadGameState() {
 export function saveGameState(gameState) {
   const current = loadAppData();
   saveAppData({ ...current, gameState });
+}
+
+export function addCookiesForDebug(amount, gameState = loadGameState()) {
+  const nextGameState = {
+    ...gameState,
+    cookies: Number(gameState.cookies || 0) + amount,
+    totalCookiesEarned: Number(gameState.totalCookiesEarned || 0) + amount,
+  };
+  saveGameState(nextGameState);
+  return nextGameState;
+}
+
+export function resetCookiesForDebug(gameState = loadGameState()) {
+  const nextGameState = {
+    ...gameState,
+    cookies: 0,
+  };
+  saveGameState(nextGameState);
+  return nextGameState;
+}
+
+export function unlockAllTimerDesignsForDebug(gameState = loadGameState()) {
+  const nextGameState = {
+    ...gameState,
+    ownedTimerDesigns: ['ring', 'flip', 'water'],
+  };
+  saveGameState(nextGameState);
+  return nextGameState;
+}
+
+export function resetTimerDesignsForDebug(gameState = loadGameState()) {
+  const nextGameState = {
+    ...gameState,
+    selectedTimerDesign: 'ring',
+    ownedTimerDesigns: ['ring'],
+  };
+  saveGameState(nextGameState);
+  return nextGameState;
+}
+
+export function resetGameStateForDebug() {
+  const nextGameState = structuredClone(defaultGameState);
+  saveGameState(nextGameState);
+  return nextGameState;
 }
 
 function normalizeAppData(data) {
