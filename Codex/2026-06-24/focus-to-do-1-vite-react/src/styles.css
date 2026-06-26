@@ -115,6 +115,7 @@ select {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
+  font-size: 1rem;
   color: #243033;
   background: #fff;
   border: 1px solid rgba(36, 48, 51, 0.14);
@@ -1499,6 +1500,7 @@ button:disabled {
   }
 
   .topbar {
+    flex-wrap: wrap;
     align-items: flex-start;
   }
 
@@ -1511,6 +1513,10 @@ button:disabled {
   .form-grid,
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .task-form .primary-button {
+    width: 100%;
   }
 
   .stats-tabs {
@@ -1535,16 +1541,43 @@ button:disabled {
   }
 
   .task-card {
-    grid-template-columns: 34px minmax(0, 1fr) auto;
+    grid-template-columns: 34px minmax(0, 1fr) 44px;
+    align-items: start;
+  }
+
+  .task-main {
+    grid-column: 2;
+    padding-top: 2px;
   }
 
   .task-card .icon-button {
     grid-column: 3;
+    grid-row: 2;
   }
 
   .priority {
     grid-column: 3;
     grid-row: 1;
+    align-self: start;
+  }
+
+  .task-meta {
+    overflow-wrap: anywhere;
+  }
+
+  .timer-design-switch {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .timer-design-chips {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .fullscreen-button {
+    min-height: 44px;
   }
 
   .timer-ring {

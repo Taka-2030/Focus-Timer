@@ -249,12 +249,15 @@ function App() {
   }, [isRunning, mode, selectedTaskId, settings, gameState, sessions]);
 
   function addTask(task) {
+    const title = task.title.trim();
+    const estimate = Math.max(1, Number(task.estimate) || 1);
+    const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate) ? task.dueDate : '';
     const newTask = {
       id: crypto.randomUUID(),
-      title: task.title.trim(),
-      estimate: Number(task.estimate),
+      title,
+      estimate,
       priority: task.priority,
-      dueDate: task.dueDate,
+      dueDate,
       completed: false,
       completedPomodoros: 0,
       createdAt: new Date().toISOString(),
@@ -372,11 +375,18 @@ function App() {
   }
 
   async function toggleFullscreen() {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
       return;
     }
-    await document.documentElement.requestFullscreen();
   }
 
   function buyItem(item) {
@@ -529,29 +539,43 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
     dueDate: '',
   });
 
-  function submitTask(event) {
-    event.preventDefault();
+  function submitDraftTask() {
     if (!draft.title.trim()) return;
     onAddTask(draft);
     setDraft({ title: '', estimate: 4, priority: 'medium', dueDate: '' });
   }
 
+  function submitTask(event) {
+    event.preventDefault();
+    submitDraftTask();
+  }
+
+  function submitTaskFromTitle(event) {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    submitDraftTask();
+  }
+
   return (
     <section className="view-stack">
-      <form className="task-form" onSubmit={submitTask}>
+      <form className="task-form" onSubmit={submitTask} noValidate>
         <label>
           {t('tasks.name')}
-          <input
-            value={draft.title}
-            onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-            placeholder={t('tasks.placeholder')}
-          />
+            <input
+              name="task-title"
+              value={draft.title}
+              onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+              onKeyDown={submitTaskFromTitle}
+              placeholder={t('tasks.placeholder')}
+              autoComplete="off"
+            />
         </label>
         <div className="form-grid">
           <label>
             {t('tasks.estimate')}
             <input
               min="1"
+              name="task-estimate"
               type="number"
               value={draft.estimate}
               onChange={(event) => setDraft({ ...draft, estimate: event.target.value })}
@@ -571,6 +595,7 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
           <label>
             {t('tasks.dueDate')}
             <input
+              name="task-due-date"
               type="date"
               value={draft.dueDate}
               onChange={(event) => setDraft({ ...draft, dueDate: event.target.value })}
@@ -1271,4 +1296,7 @@ function EmptyState({ title, text }) {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+const rootElement = document.getElementById('root');
+const root = window.__focusTimerRoot ?? createRoot(rootElement);
+window.__focusTimerRoot = root;
+root.render(<App />);
