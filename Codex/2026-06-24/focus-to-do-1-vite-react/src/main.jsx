@@ -15,6 +15,7 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import ToggleSwitch from './components/ToggleSwitch';
+import BackgroundLayer from './components/BackgroundLayer';
 import TimerRenderer, { TIMER_DESIGNS } from './components/timerDesigns/TimerRenderer';
 import './i18n';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,11 @@ import {
   unlockAllTimerDesignsForDebug,
 } from './services/storageService';
 import { getProductionDebugMode } from './services/debugModeService';
+import {
+  getBackgroundClassName,
+  getTimePeriod,
+  updateBackgroundOnWorkComplete,
+} from './services/backgroundService';
 import './styles.css';
 
 const isDeveloperPanelAvailable =
@@ -196,6 +202,7 @@ function App() {
   const [sessions, setSessions] = React.useState(initialData.sessions);
   const [settings, setSettings] = React.useState(initialData.settings);
   const [gameState, setGameState] = React.useState(initialData.gameState);
+  const [backgroundState, setBackgroundState] = React.useState(initialData.backgroundState);
   const [selectedTaskId, setSelectedTaskId] = React.useState('');
   const [mode, setMode] = React.useState('work');
   const [secondsLeft, setSecondsLeft] = React.useState(() =>
@@ -209,12 +216,14 @@ function App() {
   const [isProductionDebugEnabled] = React.useState(() => getProductionDebugMode());
   const [timerDebugFrame, setTimerDebugFrame] = React.useState(null);
   const [lastTaskDebug, setLastTaskDebug] = React.useState(null);
+  const [currentTimePeriod, setCurrentTimePeriod] = React.useState(() => getTimePeriod());
   const shouldAutoStartRef = React.useRef(false);
 
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
   const activeMode = modes[mode];
   const modeColor = mode === 'work' ? settings.themeColor : activeMode.color;
   const currentTotalSeconds = minutesToSeconds(settings[modes[mode].settingsKey]);
+  const backgroundClassName = getBackgroundClassName(backgroundState, currentTimePeriod);
 
   const handleTimerDebugFrame = React.useCallback(
     (frame) => {
@@ -225,12 +234,17 @@ function App() {
   );
 
   React.useEffect(() => {
-    saveAppData({ tasks, sessions, settings, gameState });
-  }, [tasks, sessions, settings, gameState]);
+    saveAppData({ tasks, sessions, settings, gameState, backgroundState });
+  }, [tasks, sessions, settings, gameState, backgroundState]);
 
   React.useEffect(() => {
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
+
+  React.useEffect(() => {
+    const id = window.setInterval(() => setCurrentTimePeriod(getTimePeriod()), 60 * 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   React.useEffect(() => {
     function syncFullscreenState() {
@@ -289,7 +303,7 @@ function App() {
     };
     const nextTasks = [newTask, ...tasks];
     setTasks(nextTasks);
-    saveAppData({ tasks: nextTasks, sessions, settings, gameState });
+    saveAppData({ tasks: nextTasks, sessions, settings, gameState, backgroundState });
     setSelectedTaskId(newTask.id);
     return {
       newTask,
@@ -373,6 +387,7 @@ function App() {
         currentStreak: current.currentStreak + 1,
       }));
       setRewardToast({ id: createStableId('reward'), amount: reward });
+      setBackgroundState((current) => updateBackgroundOnWorkComplete(current, completedAt));
 
       if (selectedTaskId) {
         setTasks((current) =>
@@ -467,6 +482,7 @@ function App() {
       }`}
       style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}
     >
+      <BackgroundLayer backgroundState={backgroundState} timePeriod={currentTimePeriod} />
       <main className="shell">
         <header className="topbar">
           <div>
@@ -555,6 +571,9 @@ function App() {
           timerDebugFrame={timerDebugFrame}
           tasksLength={tasks.length}
           taskDebug={lastTaskDebug}
+          backgroundState={backgroundState}
+          timePeriod={currentTimePeriod}
+          backgroundClassName={backgroundClassName}
         />
       )}
 
@@ -588,6 +607,9 @@ function ProductionDebugPanel({
   timerDebugFrame,
   tasksLength,
   taskDebug,
+  backgroundState,
+  timePeriod,
+  backgroundClassName,
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const fallbackProgress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
@@ -659,6 +681,18 @@ function ProductionDebugPanel({
               value={taskDebug ? `${taskDebug.tasksLength} -> ${taskDebug.nextTasksLength}` : '-'}
             />
             <ProductionDebugRow label="afterRender" value={taskDebug?.afterRenderTasksLength ?? '-'} />
+          </ProductionDebugSection>
+
+          <ProductionDebugSection title="Background">
+            <ProductionDebugRow label="backgroundTheme" value={backgroundState.theme} />
+            <ProductionDebugRow label="timePeriod" value={timePeriod} />
+            <ProductionDebugRow label="growthLevel" value={backgroundState.growthLevel} />
+            <ProductionDebugRow
+              label="completedWorkSessions"
+              value={backgroundState.completedWorkSessions}
+            />
+            <ProductionDebugRow label="backgroundClassName" value={backgroundClassName} />
+            <ProductionDebugRow label="lastUpdatedAt" value={backgroundState.lastUpdatedAt} />
           </ProductionDebugSection>
         </div>
       )}

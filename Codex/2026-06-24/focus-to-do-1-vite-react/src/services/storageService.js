@@ -1,3 +1,5 @@
+import { createDefaultBackgroundState, normalizeBackgroundState } from './backgroundService';
+
 const STORAGE_KEY = 'focus-pomodoro-app';
 
 export const defaultSettings = {
@@ -28,6 +30,7 @@ const defaultData = {
   sessions: [],
   settings: defaultSettings,
   gameState: defaultGameState,
+  backgroundState: createDefaultBackgroundState(),
 };
 
 export function loadAppData() {
@@ -77,6 +80,15 @@ export function loadGameState() {
 export function saveGameState(gameState) {
   const current = loadAppData();
   saveAppData({ ...current, gameState });
+}
+
+export function loadBackgroundState() {
+  return loadAppData().backgroundState;
+}
+
+export function saveBackgroundState(backgroundState) {
+  const current = loadAppData();
+  saveAppData({ ...current, backgroundState });
 }
 
 export function addCookiesForDebug(amount, gameState = loadGameState()) {
@@ -130,6 +142,7 @@ function normalizeAppData(data) {
     tasks: Array.isArray(data?.tasks) ? data.tasks : [],
     sessions: Array.isArray(data?.sessions) ? data.sessions : [],
     settings: { ...defaultSettings, ...(data?.settings ?? {}) },
+    backgroundState: normalizeBackgroundState(data?.backgroundState),
     gameState: {
       ...defaultGameState,
       ...(data?.gameState ?? {}),
