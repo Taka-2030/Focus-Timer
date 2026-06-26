@@ -11,10 +11,19 @@ export const defaultSettings = {
   volume: 0.65,
 };
 
+export const defaultGameState = {
+  cookies: 0,
+  purchasedItems: {},
+  purchasedUpgrades: [],
+  currentStreak: 0,
+  totalCookiesEarned: 0,
+};
+
 const defaultData = {
   tasks: [],
   sessions: [],
   settings: defaultSettings,
+  gameState: defaultGameState,
 };
 
 export function loadAppData() {
@@ -57,6 +66,15 @@ export function saveSessions(sessions) {
   saveAppData({ ...current, sessions });
 }
 
+export function loadGameState() {
+  return loadAppData().gameState;
+}
+
+export function saveGameState(gameState) {
+  const current = loadAppData();
+  saveAppData({ ...current, gameState });
+}
+
 function normalizeAppData(data) {
   return {
     ...defaultData,
@@ -64,5 +82,16 @@ function normalizeAppData(data) {
     tasks: Array.isArray(data?.tasks) ? data.tasks : [],
     sessions: Array.isArray(data?.sessions) ? data.sessions : [],
     settings: { ...defaultSettings, ...(data?.settings ?? {}) },
+    gameState: {
+      ...defaultGameState,
+      ...(data?.gameState ?? {}),
+      purchasedItems:
+        data?.gameState?.purchasedItems && typeof data.gameState.purchasedItems === 'object'
+          ? data.gameState.purchasedItems
+          : {},
+      purchasedUpgrades: Array.isArray(data?.gameState?.purchasedUpgrades)
+        ? data.gameState.purchasedUpgrades
+        : [],
+    },
   };
 }

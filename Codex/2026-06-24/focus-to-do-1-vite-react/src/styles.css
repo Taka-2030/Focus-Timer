@@ -78,6 +78,14 @@ h1 {
   box-shadow: 0 12px 36px rgba(44, 38, 31, 0.08);
 }
 
+.cookie-pill,
+.cookie-bank {
+  color: #7a4f00;
+  font-weight: 900;
+  background: #fff2cc;
+  border-color: #f0d58f;
+}
+
 .view-stack {
   display: grid;
   gap: 18px;
@@ -256,10 +264,52 @@ select:focus {
 }
 
 .timer-view {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 24px;
   padding-top: 10px;
+}
+
+.cookie-bank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #f0d58f;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(122, 79, 0, 0.1);
+}
+
+.reward-toast {
+  position: absolute;
+  top: 56px;
+  z-index: 3;
+  padding: 9px 14px;
+  color: #fff;
+  font-weight: 900;
+  background: #1f6a44;
+  border-radius: 999px;
+  box-shadow: 0 14px 36px rgba(31, 106, 68, 0.26);
+  animation: reward-float 1.55s ease forwards;
+}
+
+@keyframes reward-float {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-44px) scale(1.04);
+  }
 }
 
 .mode-tabs {
@@ -547,6 +597,94 @@ select:focus {
   text-anchor: middle;
 }
 
+.shop-summary {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  color: #7a4f00;
+  background: #fff2cc;
+  border: 1px solid #f0d58f;
+  border-radius: 8px;
+  box-shadow: 0 14px 36px rgba(122, 79, 0, 0.1);
+}
+
+.shop-summary span,
+.shop-summary small {
+  font-weight: 800;
+}
+
+.shop-summary strong {
+  color: #263235;
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  line-height: 1;
+}
+
+.shop-section {
+  display: grid;
+  gap: 12px;
+}
+
+.shop-section h2 {
+  margin: 0;
+  color: #263235;
+  font-size: 1.1rem;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.shop-card {
+  display: grid;
+  gap: 14px;
+  align-content: space-between;
+  min-height: 210px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(36, 48, 51, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(44, 38, 31, 0.08);
+}
+
+.shop-card.purchased {
+  background: color-mix(in srgb, var(--theme) 8%, #fff);
+}
+
+.shop-card h3 {
+  margin: 0 0 6px;
+  color: #263235;
+  font-size: 1.05rem;
+}
+
+.shop-card p {
+  margin: 0;
+  color: #667174;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.shop-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shop-meta span {
+  padding: 6px 9px;
+  color: #526063;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(36, 48, 51, 0.06);
+  border-radius: 999px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
 .setting-row {
   display: flex;
   align-items: center;
@@ -641,8 +779,8 @@ select:focus {
   left: 16px;
   z-index: 5;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  width: min(560px, calc(100% - 32px));
+  grid-template-columns: repeat(5, 1fr);
+  width: min(660px, calc(100% - 32px));
   margin: 0 auto;
   padding: 8px;
   background: rgba(255, 255, 255, 0.92);
@@ -680,7 +818,7 @@ select:focus {
   }
 
   .focus-pill {
-    max-width: 48%;
+    max-width: 100%;
     padding: 9px 10px;
     font-size: 0.8rem;
   }
@@ -701,6 +839,10 @@ select:focus {
 
   .bar-track {
     min-height: 150px;
+  }
+
+  .shop-grid {
+    grid-template-columns: 1fr;
   }
 
   .task-card {
@@ -736,7 +878,18 @@ select:focus {
 
   .mode-tabs button,
   .nav-button span {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
+  }
+
+  .bottom-nav {
+    right: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    padding: 6px;
+  }
+
+  .nav-button {
+    min-height: 54px;
   }
 
   .timer-actions {
