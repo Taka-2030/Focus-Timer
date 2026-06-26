@@ -1,0 +1,109 @@
+{
+  "app": {
+    "name": "Focus Pomodoro",
+    "noTask": "タスク未選択",
+    "cookies": "Cookies"
+  },
+  "nav": {
+    "tasks": "タスク",
+    "timer": "タイマー",
+    "shop": "ショップ",
+    "stats": "統計",
+    "settings": "設定"
+  },
+  "common": {
+    "add": "追加",
+    "buy": "購入",
+    "purchased": "購入済み",
+    "price": "価格",
+    "owned": "所持数",
+    "oneTime": "1回のみ",
+    "minutes": "分",
+    "times": "回",
+    "tasks": "件",
+    "high": "高",
+    "medium": "中",
+    "low": "低",
+    "totalEarned": "累計獲得",
+    "max": "最大",
+    "unit": "単位"
+  },
+  "tasks": {
+    "name": "タスク名",
+    "placeholder": "例: 英単語を30個覚える",
+    "estimate": "予定",
+    "priority": "優先度",
+    "dueDate": "締切",
+    "emptyTitle": "まだタスクがありません",
+    "emptyText": "最初の作業を追加して始めましょう。",
+    "pomodoros": "ポモドーロ",
+    "toggleComplete": "完了切り替え",
+    "delete": "削除"
+  },
+  "timer": {
+    "mode": "タイマーモード",
+    "work": "作業",
+    "shortBreak": "短い休憩",
+    "longBreak": "長い休憩",
+    "focusTask": "集中するタスク",
+    "noTask": "選択なし",
+    "soundReady": "音の準備完了",
+    "soundLocked": "開始ボタン後に音が有効になります",
+    "start": "開始",
+    "pause": "一時停止",
+    "reset": "リセット",
+    "focusing": "集中中",
+    "ready": "待機中",
+    "reward": "+{{amount}} cookies"
+  },
+  "stats": {
+    "viewType": "統計表示タイプ",
+    "numbers": "数値表示",
+    "bars": "棒グラフ",
+    "line": "時間推移",
+    "todayFocus": "今日の集中時間",
+    "todayPomodoros": "今日の完了ポモドーロ",
+    "weekFocus": "今週の集中時間",
+    "completedTasks": "完了タスク数",
+    "totalCookies": "累計Cookies",
+    "currentStreak": "現在の連続数",
+    "lastSevenDays": "過去7日間の集中時間",
+    "focusTrend": "時間推移"
+  },
+  "shop": {
+    "facilities": "施設",
+    "upgrades": "アップグレード",
+    "itemEffect": "作業タイマー完了時の報酬 +{{bonus}} cookie",
+    "pencil": "Pencil",
+    "notebook": "Notebook",
+    "library": "Library",
+    "lab": "Lab",
+    "aiAssistant": "AI Assistant",
+    "focusBoost1": "Focus Boost Lv.1",
+    "focusBoost1Effect": "全報酬 +10%",
+    "streakBonus": "Streak Bonus",
+    "streakBonusEffect": "連続3ポモドーロ達成ごとに報酬 +30%",
+    "morningBoost": "Morning Boost",
+    "morningBoostEffect": "午前中の作業完了報酬 +20%"
+  },
+  "settings": {
+    "workTime": "作業時間",
+    "shortBreak": "短い休憩",
+    "longBreak": "長い休憩",
+    "autoStart": "次のタイマーを自動で開始する",
+    "autoStartDesc": "作業後は休憩へ、休憩後は作業へ自動で移ります",
+    "sound": "音を鳴らす",
+    "soundDesc": "タイマー終了時の通知音",
+    "startSound": "開始時の効果音",
+    "startSoundDesc": "開始ボタンを押したときに短い音を鳴らします",
+    "volume": "音量",
+    "themeColor": "テーマカラー",
+    "themeColorDesc": "アプリ全体のアクセント色",
+    "language": "🌐 Language",
+    "minutesUnit": "分単位"
+  },
+  "language": {
+    "ja": "日本語",
+    "en": "English"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "app": {
+    "name": "Focus Pomodoro",
+    "noTask": "No task selected",
+    "cookies": "Cookies"
+  },
+  "nav": {
+    "tasks": "Tasks",
+    "timer": "Timer",
+    "shop": "Shop",
+    "stats": "Stats",
+    "settings": "Settings"
+  },
+  "common": {
+    "add": "Add",
+    "buy": "Buy",
+    "purchased": "Purchased",
+    "price": "Price",
+    "owned": "Owned",
+    "oneTime": "One time",
+    "minutes": "min",
+    "times": "times",
+    "tasks": "tasks",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "totalEarned": "Total earned",
+    "max": "Max",
+    "unit": "Unit"
+  },
+  "tasks": {
+    "name": "Task name",
+    "placeholder": "Example: Review vocabulary",
+    "estimate": "Estimate",
+    "priority": "Priority",
+    "dueDate": "Due date",
+    "emptyTitle": "No tasks yet",
+    "emptyText": "Add your first focus task.",
+    "pomodoros": "pomodoros",
+    "toggleComplete": "Toggle complete",
+    "delete": "Delete"
+  },
+  "timer": {
+    "mode": "Timer mode",
+    "work": "Work",
+    "shortBreak": "Short Break",
+    "longBreak": "Long Break",
+    "focusTask": "Focus task",
+    "noTask": "No task selected",
+    "soundReady": "Sound ready",
+    "soundLocked": "Sound unlocks after pressing Start",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "focusing": "Focusing",
+    "ready": "Ready",
+    "reward": "+{{amount}} cookies"
+  },
+  "stats": {
+    "viewType": "Stats view type",
+    "numbers": "Numbers",
+    "bars": "Bars",
+    "line": "Trend",
+    "todayFocus": "Today's focus",
+    "todayPomodoros": "Today's pomodoros",
+    "weekFocus": "This week's focus",
+    "completedTasks": "Completed tasks",
+    "totalCookies": "Total Cookies",
+    "currentStreak": "Current streak",
+    "lastSevenDays": "Last 7 days focus",
+    "focusTrend": "Focus trend"
+  },
+  "shop": {
+    "facilities": "Facilities",
+    "upgrades": "Upgrades",
+    "itemEffect": "+{{bonus}} cookie on each completed work timer",
+    "pencil": "Pencil",
+    "notebook": "Notebook",
+    "library": "Library",
+    "lab": "Lab",
+    "aiAssistant": "AI Assistant",
+    "focusBoost1": "Focus Boost Lv.1",
+    "focusBoost1Effect": "All work rewards +10%",
+    "streakBonus": "Streak Bonus",
+    "streakBonusEffect": "Every 3-work-session streak gives +30%",
+    "morningBoost": "Morning Boost",
+    "morningBoostEffect": "Morning work rewards +20%"
+  },
+  "settings": {
+    "workTime": "Work time",
+    "shortBreak": "Short break",
+    "longBreak": "Long break",
+    "autoStart": "Auto-start next timer",
+    "autoStartDesc": "Move from work to break and back automatically",
+    "sound": "Sound",
+    "soundDesc": "Play a sound when the timer finishes",
+    "startSound": "Start sound",
+    "startSoundDesc": "Play a short sound when starting",
+    "volume": "Volume",
+    "themeColor": "Theme color",
+    "themeColorDesc": "Accent color for the app",
+    "language": "🌐 Language",
+    "minutesUnit": "Minutes"
+  },
+  "language": {
+    "ja": "日本語",
+    "en": "English"
+  }
+}

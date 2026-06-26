@@ -1,11 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { fileURLToPath, URL } from 'node:url';
 
 const themeColor = '#e85d55';
 const backgroundColor = '#f8f6f2';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      'react-i18next': fileURLToPath(new URL('./src/i18n/reactI18nextCompat.jsx', import.meta.url)),
+    },
+  },
   plugins: [
     react(),
     VitePWA({

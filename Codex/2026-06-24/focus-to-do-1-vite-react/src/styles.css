@@ -713,6 +713,10 @@ button:disabled {
   width: 120px;
 }
 
+.language-row select {
+  width: 160px;
+}
+
 .color-input {
   width: 72px;
   padding: 4px;

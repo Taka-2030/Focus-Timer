@@ -9,6 +9,8 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "i18next": "latest",
+    "react-i18next": "latest",
     "vite": "latest"
   },
   "devDependencies": {

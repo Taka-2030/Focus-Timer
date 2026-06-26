@@ -15,56 +15,58 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import ToggleSwitch from './components/ToggleSwitch';
+import './i18n';
+import { useTranslation } from 'react-i18next';
 import { loadAppData, saveAppData } from './services/storageService';
 import './styles.css';
 
 const shopItems = [
-  { id: 'pencil', name: 'Pencil', price: 10, bonus: 1 },
-  { id: 'notebook', name: 'Notebook', price: 50, bonus: 5 },
-  { id: 'library', name: 'Library', price: 300, bonus: 20 },
-  { id: 'lab', name: 'Lab', price: 1000, bonus: 80 },
-  { id: 'aiAssistant', name: 'AI Assistant', price: 5000, bonus: 300 },
+  { id: 'pencil', nameKey: 'shop.pencil', price: 10, bonus: 1 },
+  { id: 'notebook', nameKey: 'shop.notebook', price: 50, bonus: 5 },
+  { id: 'library', nameKey: 'shop.library', price: 300, bonus: 20 },
+  { id: 'lab', nameKey: 'shop.lab', price: 1000, bonus: 80 },
+  { id: 'aiAssistant', nameKey: 'shop.aiAssistant', price: 5000, bonus: 300 },
 ];
 
 const shopUpgrades = [
   {
     id: 'focusBoost1',
-    name: 'Focus Boost Lv.1',
+    nameKey: 'shop.focusBoost1',
     price: 100,
-    effect: 'All work rewards +10%',
+    effectKey: 'shop.focusBoost1Effect',
   },
   {
     id: 'streakBonus',
-    name: 'Streak Bonus',
+    nameKey: 'shop.streakBonus',
     price: 250,
-    effect: 'Every 3-work-session streak gives +30%',
+    effectKey: 'shop.streakBonusEffect',
   },
   {
     id: 'morningBoost',
-    name: 'Morning Boost',
+    nameKey: 'shop.morningBoost',
     price: 500,
-    effect: 'Morning work rewards +20%',
+    effectKey: 'shop.morningBoostEffect',
   },
 ];
 
 const navItems = [
-  { id: 'tasks', label: 'Tasks', icon: ListTodo },
-  { id: 'timer', label: 'Timer', icon: Clock3 },
-  { id: 'shop', label: 'Shop', icon: ShoppingBag },
-  { id: 'stats', label: 'Stats', icon: BarChart3 },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'tasks', labelKey: 'nav.tasks', icon: ListTodo },
+  { id: 'timer', labelKey: 'nav.timer', icon: Clock3 },
+  { id: 'shop', labelKey: 'nav.shop', icon: ShoppingBag },
+  { id: 'stats', labelKey: 'nav.stats', icon: BarChart3 },
+  { id: 'settings', labelKey: 'nav.settings', icon: Settings },
 ];
 
 const modes = {
-  work: { label: 'Work', settingsKey: 'workMinutes', color: '#e85d55' },
-  shortBreak: { label: 'Short Break', settingsKey: 'shortBreakMinutes', color: '#3aa879' },
-  longBreak: { label: 'Long Break', settingsKey: 'longBreakMinutes', color: '#4d78d8' },
+  work: { labelKey: 'timer.work', settingsKey: 'workMinutes', color: '#e85d55' },
+  shortBreak: { labelKey: 'timer.shortBreak', settingsKey: 'shortBreakMinutes', color: '#3aa879' },
+  longBreak: { labelKey: 'timer.longBreak', settingsKey: 'longBreakMinutes', color: '#4d78d8' },
 };
 
 const statsTabs = [
-  { id: 'numbers', label: 'Numbers' },
-  { id: 'bars', label: 'Bars' },
-  { id: 'line', label: 'Trend' },
+  { id: 'numbers', labelKey: 'stats.numbers' },
+  { id: 'bars', labelKey: 'stats.bars' },
+  { id: 'line', labelKey: 'stats.line' },
 ];
 
 function minutesToSeconds(minutes) {
@@ -146,6 +148,7 @@ function getLastSevenDays(sessions) {
 }
 
 function App() {
+  const { t, i18n } = useTranslation();
   const initialData = React.useMemo(() => loadAppData(), []);
   const [activeView, setActiveView] = React.useState('tasks');
   const [tasks, setTasks] = React.useState(initialData.tasks);
@@ -169,6 +172,10 @@ function App() {
   React.useEffect(() => {
     saveAppData({ tasks, sessions, settings, gameState });
   }, [tasks, sessions, settings, gameState]);
+
+  React.useEffect(() => {
+    i18n.changeLanguage(settings.language);
+  }, [settings.language, i18n]);
 
   React.useEffect(() => {
     if (!rewardToast) return undefined;
@@ -347,13 +354,15 @@ function App() {
       <main className="shell">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Focus Pomodoro</p>
-            <h1>{navItems.find((item) => item.id === activeView)?.label}</h1>
+            <p className="eyebrow">{t('app.name')}</p>
+            <h1>{t(navItems.find((item) => item.id === activeView)?.labelKey)}</h1>
           </div>
-          <div className="focus-pill cookie-pill">🍪 {formatCookies(gameState.cookies)} Cookies</div>
+          <div className="focus-pill cookie-pill">
+            🍪 {formatCookies(gameState.cookies)} {t('app.cookies')}
+          </div>
           <div className="focus-pill">
             <Clock3 size={18} />
-            {selectedTask ? selectedTask.title : 'No task selected'}
+            {selectedTask ? selectedTask.title : t('app.noTask')}
           </div>
         </header>
 
@@ -394,7 +403,12 @@ function App() {
         {activeView === 'stats' && <StatsView tasks={tasks} sessions={sessions} gameState={gameState} />}
 
         {activeView === 'settings' && (
-          <SettingsView settings={settings} setSettings={setSettings} resetTimer={resetTimer} />
+          <SettingsView
+            settings={settings}
+            setSettings={setSettings}
+            resetTimer={resetTimer}
+            currentLanguage={i18n.language}
+          />
         )}
       </main>
 
@@ -409,7 +423,7 @@ function App() {
               type="button"
             >
               <Icon size={21} />
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </button>
           );
         })}
@@ -419,6 +433,7 @@ function App() {
 }
 
 function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTask, onSelectTask }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = React.useState({
     title: '',
     estimate: 4,
@@ -437,16 +452,16 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
     <section className="view-stack">
       <form className="task-form" onSubmit={submitTask}>
         <label>
-          Task name
+          {t('tasks.name')}
           <input
             value={draft.title}
             onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-            placeholder="Example: Review vocabulary"
+            placeholder={t('tasks.placeholder')}
           />
         </label>
         <div className="form-grid">
           <label>
-            Estimate
+            {t('tasks.estimate')}
             <input
               min="1"
               type="number"
@@ -455,18 +470,18 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
             />
           </label>
           <label>
-            Priority
+            {t('tasks.priority')}
             <select
               value={draft.priority}
               onChange={(event) => setDraft({ ...draft, priority: event.target.value })}
             >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="high">{t('common.high')}</option>
+              <option value="medium">{t('common.medium')}</option>
+              <option value="low">{t('common.low')}</option>
             </select>
           </label>
           <label>
-            Due date
+            {t('tasks.dueDate')}
             <input
               type="date"
               value={draft.dueDate}
@@ -476,13 +491,13 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
         </div>
         <button className="primary-button" type="submit">
           <Plus size={18} />
-          Add
+          {t('common.add')}
         </button>
       </form>
 
       <div className="task-list">
         {tasks.length === 0 ? (
-          <EmptyState title="No tasks yet" text="Add your first focus task." />
+          <EmptyState title={t('tasks.emptyTitle')} text={t('tasks.emptyText')} />
         ) : (
           tasks.map((task) => (
             <article
@@ -495,23 +510,23 @@ function TasksView({ tasks, selectedTaskId, onAddTask, onUpdateTask, onDeleteTas
                 className="check-button"
                 onClick={() => onUpdateTask(task.id, { completed: !task.completed })}
                 type="button"
-                aria-label="Toggle complete"
+                aria-label={t('tasks.toggleComplete')}
               >
                 {task.completed && <Check size={16} />}
               </button>
               <button className="task-main" onClick={() => onSelectTask(task.id)} type="button">
                 <span className="task-title">{task.title}</span>
                 <span className="task-meta">
-                  {task.completedPomodoros}/{task.estimate} pomodoros
+                  {task.completedPomodoros}/{task.estimate} {t('tasks.pomodoros')}
                   {task.dueDate ? ` ・ ${task.dueDate}` : ''}
                 </span>
               </button>
-              <span className={`priority ${task.priority}`}>{task.priority}</span>
+              <span className={`priority ${task.priority}`}>{t(`common.${task.priority}`)}</span>
               <button
                 className="icon-button"
                 onClick={() => onDeleteTask(task.id)}
                 type="button"
-                aria-label="Delete"
+                aria-label={t('tasks.delete')}
               >
                 <Trash2 size={18} />
               </button>
@@ -539,6 +554,7 @@ function TimerView({
   gameState,
   rewardToast,
 }) {
+  const { t } = useTranslation();
   const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
   const radius = 132;
   const circumference = 2 * Math.PI * radius;
@@ -546,14 +562,16 @@ function TimerView({
 
   return (
     <section className="timer-view">
-      <div className="cookie-bank">🍪 {formatCookies(gameState.cookies)} Cookies</div>
+      <div className="cookie-bank">
+        🍪 {formatCookies(gameState.cookies)} {t('app.cookies')}
+      </div>
       {rewardToast && (
         <div className="reward-toast" key={rewardToast.id}>
-          +{formatCookies(rewardToast.amount)} cookies
+          {t('timer.reward', { amount: formatCookies(rewardToast.amount) })}
         </div>
       )}
 
-      <div className="mode-tabs" role="tablist" aria-label="Timer mode">
+      <div className="mode-tabs" role="tablist" aria-label={t('timer.mode')}>
         {Object.entries(modes).map(([key, item]) => (
           <button
             key={key}
@@ -561,7 +579,7 @@ function TimerView({
             onClick={() => setMode(key)}
             type="button"
           >
-            {item.label}
+            {t(item.labelKey)}
           </button>
         ))}
       </div>
@@ -579,16 +597,16 @@ function TimerView({
           />
         </svg>
         <div className="timer-face">
-          <span className="timer-label">{modes[mode].label}</span>
+          <span className="timer-label">{t(modes[mode].labelKey)}</span>
           <strong>{formatTime(secondsLeft)}</strong>
-          <span className="timer-status">{isRunning ? 'Focusing' : 'Ready'}</span>
+          <span className="timer-status">{isRunning ? t('timer.focusing') : t('timer.ready')}</span>
         </div>
       </div>
 
       <label className="task-select">
-        Focus task
+        {t('timer.focusTask')}
         <select value={selectedTaskId} onChange={(event) => setSelectedTaskId(event.target.value)}>
-          <option value="">No task selected</option>
+          <option value="">{t('timer.noTask')}</option>
           {tasks
             .filter((task) => !task.completed)
             .map((task) => (
@@ -601,17 +619,17 @@ function TimerView({
 
       <div className="sound-note">
         <Volume2 size={17} />
-        {audioReady ? 'Sound ready' : 'Sound unlocks after pressing Start'}
+        {audioReady ? t('timer.soundReady') : t('timer.soundLocked')}
       </div>
 
       <div className="timer-actions">
         <button className="primary-button large" onClick={isRunning ? pauseTimer : startTimer} type="button">
           {isRunning ? <Pause size={20} /> : <Play size={20} />}
-          {isRunning ? 'Pause' : 'Start'}
+          {isRunning ? t('timer.pause') : t('timer.start')}
         </button>
         <button className="secondary-button large" onClick={resetTimer} type="button">
           <RotateCcw size={20} />
-          Reset
+          {t('timer.reset')}
         </button>
       </div>
     </section>
@@ -619,16 +637,19 @@ function TimerView({
 }
 
 function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
+  const { t } = useTranslation();
   return (
     <section className="view-stack">
       <div className="shop-summary">
-        <span>Cookies</span>
+        <span>{t('app.cookies')}</span>
         <strong>🍪 {formatCookies(gameState.cookies)}</strong>
-        <small>Total earned: {formatCookies(gameState.totalCookiesEarned)}</small>
+        <small>
+          {t('common.totalEarned')}: {formatCookies(gameState.totalCookiesEarned)}
+        </small>
       </div>
 
       <div className="shop-section">
-        <h2>Facilities</h2>
+        <h2>{t('shop.facilities')}</h2>
         <div className="shop-grid">
           {shopItems.map((item) => {
             const count = Number(gameState.purchasedItems[item.id] || 0);
@@ -636,12 +657,12 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
             return (
               <article className="shop-card" key={item.id}>
                 <div>
-                  <h3>{item.name}</h3>
-                  <p>+{item.bonus} cookie on each completed work timer</p>
+                  <h3>{t(item.nameKey)}</h3>
+                  <p>{t('shop.itemEffect', { bonus: item.bonus })}</p>
                 </div>
                 <div className="shop-meta">
-                  <span>Price: 🍪 {item.price.toLocaleString()}</span>
-                  <span>Owned: {count}</span>
+                  <span>{t('common.price')}: 🍪 {item.price.toLocaleString()}</span>
+                  <span>{t('common.owned')}: {count}</span>
                 </div>
                 <button
                   className="primary-button"
@@ -649,7 +670,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
                   disabled={!canBuy}
                   onClick={() => onBuyItem(item)}
                 >
-                  Buy
+                  {t('common.buy')}
                 </button>
               </article>
             );
@@ -658,7 +679,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
       </div>
 
       <div className="shop-section">
-        <h2>Upgrades</h2>
+        <h2>{t('shop.upgrades')}</h2>
         <div className="shop-grid">
           {shopUpgrades.map((upgrade) => {
             const purchased = hasUpgrade(gameState, upgrade.id);
@@ -666,12 +687,12 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
             return (
               <article className={`shop-card ${purchased ? 'purchased' : ''}`} key={upgrade.id}>
                 <div>
-                  <h3>{upgrade.name}</h3>
-                  <p>{upgrade.effect}</p>
+                  <h3>{t(upgrade.nameKey)}</h3>
+                  <p>{t(upgrade.effectKey)}</p>
                 </div>
                 <div className="shop-meta">
-                  <span>Price: 🍪 {upgrade.price.toLocaleString()}</span>
-                  <span>{purchased ? 'Purchased' : 'One time'}</span>
+                  <span>{t('common.price')}: 🍪 {upgrade.price.toLocaleString()}</span>
+                  <span>{purchased ? t('common.purchased') : t('common.oneTime')}</span>
                 </div>
                 <button
                   className="primary-button"
@@ -679,7 +700,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
                   disabled={!canBuy}
                   onClick={() => onBuyUpgrade(upgrade)}
                 >
-                  {purchased ? 'Purchased' : 'Buy'}
+                  {purchased ? t('common.purchased') : t('common.buy')}
                 </button>
               </article>
             );
@@ -691,6 +712,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade }) {
 }
 
 function StatsView({ tasks, sessions, gameState }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = React.useState('numbers');
   const todayKey = toDateKey();
   const weekStart = getWeekStart(new Date());
@@ -707,7 +729,7 @@ function StatsView({ tasks, sessions, gameState }) {
 
   return (
     <section className="view-stack">
-      <div className="stats-tabs" role="tablist" aria-label="Stats view type">
+      <div className="stats-tabs" role="tablist" aria-label={t('stats.viewType')}>
         {statsTabs.map((tab) => (
           <button
             key={tab.id}
@@ -715,19 +737,19 @@ function StatsView({ tasks, sessions, gameState }) {
             onClick={() => setActiveTab(tab.id)}
             type="button"
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>
 
       {activeTab === 'numbers' && (
         <div className="stats-grid">
-          <StatCard label="Today's focus" value={todayMinutes} unit="min" />
-          <StatCard label="Today's pomodoros" value={todayWorkSessions.length} unit="times" />
-          <StatCard label="This week's focus" value={weekMinutes} unit="min" />
-          <StatCard label="Completed tasks" value={completedTasks} unit="tasks" />
-          <StatCard label="Total Cookies" value={formatCookies(gameState.totalCookiesEarned)} unit="" />
-          <StatCard label="Current streak" value={gameState.currentStreak} unit="work" />
+          <StatCard label={t('stats.todayFocus')} value={todayMinutes} unit={t('common.minutes')} />
+          <StatCard label={t('stats.todayPomodoros')} value={todayWorkSessions.length} unit={t('common.times')} />
+          <StatCard label={t('stats.weekFocus')} value={weekMinutes} unit={t('common.minutes')} />
+          <StatCard label={t('stats.completedTasks')} value={completedTasks} unit={t('common.tasks')} />
+          <StatCard label={t('stats.totalCookies')} value={formatCookies(gameState.totalCookiesEarned)} unit="" />
+          <StatCard label={t('stats.currentStreak')} value={gameState.currentStreak} unit={t('timer.work')} />
         </div>
       )}
 
@@ -750,20 +772,21 @@ function StatCard({ label, value, unit }) {
 }
 
 function BarStatsChart({ data }) {
+  const { t } = useTranslation();
   const maxMinutes = Math.max(...data.map((item) => item.minutes), 60);
 
   return (
     <article className="chart-card">
       <div className="chart-heading">
-        <h2>Last 7 days focus</h2>
-        <span>Max {maxMinutes} min</span>
+        <h2>{t('stats.lastSevenDays')}</h2>
+        <span>{t('common.max')} {maxMinutes} {t('common.minutes')}</span>
       </div>
-      <div className="bar-chart" aria-label="Last 7 days focus bar chart">
+      <div className="bar-chart" aria-label={t('stats.lastSevenDays')}>
         {data.map((item) => {
           const height = Math.max(4, (item.minutes / maxMinutes) * 100);
           return (
             <div className="bar-item" key={item.key}>
-              <div className="bar-value">{item.minutes}m</div>
+              <div className="bar-value">{item.minutes}{t('common.minutes')}</div>
               <div className="bar-track">
                 <div className="bar-fill" style={{ height: `${height}%` }} />
               </div>
@@ -777,6 +800,7 @@ function BarStatsChart({ data }) {
 }
 
 function LineStatsChart({ data }) {
+  const { t } = useTranslation();
   const maxMinutes = Math.max(...data.map((item) => item.minutes), 60);
   const points = data.map((item, index) => {
     const x = 24 + index * 42;
@@ -788,10 +812,10 @@ function LineStatsChart({ data }) {
   return (
     <article className="chart-card">
       <div className="chart-heading">
-        <h2>Focus trend</h2>
-        <span>Unit: min</span>
+        <h2>{t('stats.focusTrend')}</h2>
+        <span>{t('common.unit')}: {t('common.minutes')}</span>
       </div>
-      <div className="line-chart-wrap" aria-label="Last 7 days focus line chart">
+      <div className="line-chart-wrap" aria-label={t('stats.focusTrend')}>
         <svg className="line-chart" viewBox="0 0 300 220" role="img">
           <line className="axis-line" x1="24" y1="176" x2="276" y2="176" />
           <line className="axis-line" x1="24" y1="40" x2="24" y2="176" />
@@ -813,50 +837,66 @@ function LineStatsChart({ data }) {
   );
 }
 
-function SettingsView({ settings, setSettings, resetTimer }) {
+function SettingsView({ settings, setSettings, resetTimer, currentLanguage }) {
+  const { t, i18n } = useTranslation();
   function updateSetting(key, value) {
     setSettings((current) => ({ ...current, [key]: value }));
     resetTimer();
   }
 
+  function updateLanguage(language) {
+    i18n.changeLanguage(language);
+    setSettings((current) => ({ ...current, language }));
+  }
+
   return (
     <section className="settings-panel">
       <NumberSetting
-        label="Work time"
+        label={t('settings.workTime')}
         value={settings.workMinutes}
         onChange={(value) => updateSetting('workMinutes', value)}
       />
       <NumberSetting
-        label="Short break"
+        label={t('settings.shortBreak')}
         value={settings.shortBreakMinutes}
         onChange={(value) => updateSetting('shortBreakMinutes', value)}
       />
       <NumberSetting
-        label="Long break"
+        label={t('settings.longBreak')}
         value={settings.longBreakMinutes}
         onChange={(value) => updateSetting('longBreakMinutes', value)}
       />
+      <label className="setting-row language-row">
+        <span>
+          {t('settings.language')}
+          <small>{t(`language.${currentLanguage}`)} &gt;</small>
+        </span>
+        <select value={currentLanguage} onChange={(event) => updateLanguage(event.target.value)}>
+          <option value="ja">{t('language.ja')}</option>
+          <option value="en">{t('language.en')}</option>
+        </select>
+      </label>
       <ToggleSetting
-        label="Auto-start next timer"
-        description="Move from work to break and back automatically"
+        label={t('settings.autoStart')}
+        description={t('settings.autoStartDesc')}
         checked={settings.autoStartNext}
         onChange={(checked) => updateSetting('autoStartNext', checked)}
       />
       <ToggleSetting
-        label="Sound"
-        description="Play a sound when the timer finishes"
+        label={t('settings.sound')}
+        description={t('settings.soundDesc')}
         checked={settings.soundEnabled}
         onChange={(checked) => updateSetting('soundEnabled', checked)}
       />
       <ToggleSetting
-        label="Start sound"
-        description="Play a short sound when starting"
+        label={t('settings.startSound')}
+        description={t('settings.startSoundDesc')}
         checked={settings.startSoundEnabled}
         onChange={(checked) => updateSetting('startSoundEnabled', checked)}
       />
       <label className="setting-row">
         <span>
-          Volume
+          {t('settings.volume')}
           <small>{Math.round(settings.volume * 100)}%</small>
         </span>
         <input
@@ -871,8 +911,8 @@ function SettingsView({ settings, setSettings, resetTimer }) {
       </label>
       <label className="setting-row">
         <span>
-          Theme color
-          <small>Accent color for the app</small>
+          {t('settings.themeColor')}
+          <small>{t('settings.themeColorDesc')}</small>
         </span>
         <input
           className="color-input"
@@ -886,11 +926,12 @@ function SettingsView({ settings, setSettings, resetTimer }) {
 }
 
 function NumberSetting({ label, value, onChange }) {
+  const { t } = useTranslation();
   return (
     <label className="setting-row">
       <span>
         {label}
-        <small>Minutes</small>
+        <small>{t('settings.minutesUnit')}</small>
       </span>
       <input
         min="1"

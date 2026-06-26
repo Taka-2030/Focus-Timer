@@ -9,6 +9,7 @@ export const defaultSettings = {
   soundEnabled: true,
   startSoundEnabled: true,
   volume: 0.65,
+  language: getInitialLanguage(),
 };
 
 export const defaultGameState = {
@@ -94,4 +95,17 @@ function normalizeAppData(data) {
         : [],
     },
   };
+}
+
+function getInitialLanguage() {
+  if (typeof localStorage !== 'undefined') {
+    const savedLanguage = localStorage.getItem('focus-language');
+    if (savedLanguage === 'ja' || savedLanguage === 'en') return savedLanguage;
+  }
+
+  if (typeof navigator !== 'undefined') {
+    return navigator.language?.toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  }
+
+  return 'ja';
 }
