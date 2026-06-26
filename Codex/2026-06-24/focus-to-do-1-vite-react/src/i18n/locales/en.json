@@ -53,8 +53,7 @@
     "start": "Start",
     "pause": "Pause",
     "reset": "Reset",
-    "focusing": "Focusing",
-    "ready": "Ready",
+    "fullscreen": "Full Screen",
     "reward": "+{{amount}} cookies"
   },
   "stats": {
@@ -111,9 +110,7 @@
     "fullscreen": "⛶ Full Screen",
     "enter": "Enter full screen",
     "exit": "Exit Full Screen",
-    "mode": "Focus Mode",
-    "enabled": "Show a full-screen focus option on the timer screen",
-    "noActiveBoosts": "No active Boosts"
+    "exitFullscreen": "Exit Full Screen"
   },
   "developer": {
     "title": "Developer Panel",

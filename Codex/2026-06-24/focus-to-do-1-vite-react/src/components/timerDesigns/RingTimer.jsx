@@ -1,4 +1,4 @@
-function RingTimer({ secondsLeft, totalSeconds, modeLabel, statusLabel, formattedTime }) {
+function RingTimer({ secondsLeft, totalSeconds, modeLabel, formattedTime }) {
   const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
   const radius = 132;
   const circumference = 2 * Math.PI * radius;
@@ -20,7 +20,6 @@ function RingTimer({ secondsLeft, totalSeconds, modeLabel, statusLabel, formatte
       <div className="timer-face">
         <span className="timer-label">{modeLabel}</span>
         <strong>{formattedTime}</strong>
-        <span className="timer-status">{statusLabel}</span>
       </div>
     </div>
   );

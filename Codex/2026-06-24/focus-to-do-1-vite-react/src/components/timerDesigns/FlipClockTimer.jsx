@@ -1,4 +1,4 @@
-function FlipClockTimer({ secondsLeft, modeLabel, statusLabel }) {
+function FlipClockTimer({ secondsLeft, modeLabel }) {
   const minutes = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
   const seconds = (secondsLeft % 60).toString().padStart(2, '0');
 
@@ -10,7 +10,6 @@ function FlipClockTimer({ secondsLeft, modeLabel, statusLabel }) {
         <span className="flip-separator">:</span>
         <FlipCard value={seconds} />
       </div>
-      <span className="timer-status">{statusLabel}</span>
     </div>
   );
 }

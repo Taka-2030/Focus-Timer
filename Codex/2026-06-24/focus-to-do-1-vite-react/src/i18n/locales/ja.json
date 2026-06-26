@@ -53,8 +53,7 @@
     "start": "開始",
     "pause": "一時停止",
     "reset": "リセット",
-    "focusing": "集中中",
-    "ready": "待機中",
+    "fullscreen": "Full Screen",
     "reward": "+{{amount}} cookies"
   },
   "stats": {
@@ -111,9 +110,7 @@
     "fullscreen": "⛶ Full Screen",
     "enter": "全画面に入る",
     "exit": "全画面を解除",
-    "mode": "Focus Mode",
-    "enabled": "ONにするとタイマー画面で全画面集中表示を使えます",
-    "noActiveBoosts": "有効なBoostなし"
+    "exitFullscreen": "全画面を解除"
   },
   "developer": {
     "title": "Developer Panel",

@@ -23,14 +23,13 @@ export const TIMER_DESIGNS = [
   },
 ];
 
-function TimerRenderer({ timerDesignId, secondsLeft, totalSeconds, modeLabel, statusLabel, formatTime }) {
+function TimerRenderer({ timerDesignId, secondsLeft, totalSeconds, modeLabel, formatTime }) {
   const progress = totalSeconds > 0 ? 1 - secondsLeft / totalSeconds : 0;
   const sharedProps = {
     secondsLeft,
     totalSeconds,
     progress,
     modeLabel,
-    statusLabel,
     formattedTime: formatTime(secondsLeft),
   };
 

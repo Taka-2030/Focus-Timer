@@ -11,7 +11,6 @@ export const defaultSettings = {
   volume: 0.65,
   language: getInitialLanguage(),
   developerMode: false,
-  focusMode: false,
 };
 
 export const defaultGameState = {

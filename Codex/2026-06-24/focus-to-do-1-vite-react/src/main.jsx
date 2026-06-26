@@ -399,7 +399,7 @@ function App() {
 
   return (
     <div
-      className={`app ${isFullscreen ? 'focus-fullscreen' : ''}`}
+      className={`app view-${activeView} ${isFullscreen ? 'focus-fullscreen' : ''}`}
       style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}
     >
       <main className="shell">
@@ -442,10 +442,9 @@ function App() {
             pauseTimer={pauseTimer}
             resetTimer={resetTimer}
             audioReady={audioReady}
-            gameState={gameState}
             rewardToast={rewardToast}
             selectedTask={selectedTask}
-            focusMode={settings.focusMode}
+            timerDesignId={gameState.selectedTimerDesign}
             isFullscreen={isFullscreen}
             toggleFullscreen={toggleFullscreen}
           />
@@ -614,31 +613,21 @@ function TimerView({
   pauseTimer,
   resetTimer,
   audioReady,
-  gameState,
   rewardToast,
   selectedTask,
-  focusMode,
+  timerDesignId,
   isFullscreen,
   toggleFullscreen,
 }) {
   const { t } = useTranslation();
-  const activeBoosts = getActiveBoosts(gameState, t);
 
   return (
-    <section className="timer-view">
-      {focusMode && (
-        <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
-          {isFullscreen ? t('focus.exit') : t('focus.fullscreen')}
-        </button>
-      )}
-      <div className="cookie-bank">
-        🍪 {formatCookies(gameState.cookies)} {t('app.cookies')}
-      </div>
+    <section className={`timer-view timer-design-${timerDesignId}`}>
+      <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
+        {isFullscreen ? t('focus.exitFullscreen') : t('timer.fullscreen')}
+      </button>
       <div className="focus-context">
         <span>{selectedTask ? selectedTask.title : t('app.noTask')}</span>
-        <span>
-          {activeBoosts.length > 0 ? activeBoosts.join(' / ') : t('focus.noActiveBoosts')}
-        </span>
       </div>
       {rewardToast && (
         <div className="reward-toast" key={rewardToast.id}>
@@ -660,11 +649,10 @@ function TimerView({
       </div>
 
       <TimerRenderer
-        timerDesignId={gameState.selectedTimerDesign}
+        timerDesignId={timerDesignId}
         secondsLeft={secondsLeft}
         totalSeconds={totalSeconds}
         modeLabel={t(modes[mode].labelKey)}
-        statusLabel={isRunning ? t('timer.focusing') : t('timer.ready')}
         formatTime={formatTime}
       />
 
@@ -699,16 +687,6 @@ function TimerView({
       </div>
     </section>
   );
-}
-
-function getActiveBoosts(gameState, t) {
-  const boosts = [];
-  if (hasUpgrade(gameState, 'focusBoost1')) boosts.push(t('shop.focusBoost1'));
-  if (hasUpgrade(gameState, 'streakBonus')) boosts.push(t('shop.streakBonus'));
-  if (hasUpgrade(gameState, 'morningBoost') && new Date().getHours() < 12) {
-    boosts.push(t('shop.morningBoost'));
-  }
-  return boosts;
 }
 
 function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSelectTimerDesign }) {
@@ -1064,12 +1042,6 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage, game
           onChange={(event) => updateSetting('themeColor', event.target.value)}
         />
       </label>
-      <ToggleSetting
-        label={t('focus.mode')}
-        description={t('focus.enabled')}
-        checked={settings.focusMode}
-        onChange={(checked) => updateSetting('focusMode', checked)}
-      />
       {isDeveloperPanelAvailable && (
         <>
           <ToggleSetting

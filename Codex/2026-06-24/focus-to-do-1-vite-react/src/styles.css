@@ -267,8 +267,12 @@ select:focus {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 24px;
-  padding-top: 10px;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.app:not(.view-tasks) .topbar .cookie-pill {
+  display: none;
 }
 
 .cookie-bank {
@@ -284,7 +288,7 @@ select:focus {
 
 .reward-toast {
   position: absolute;
-  top: 56px;
+  top: 42px;
   z-index: 3;
   padding: 9px 14px;
   color: #fff;
@@ -368,7 +372,7 @@ select:focus {
 .ring-progress {
   stroke: currentColor;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.26s linear;
+  transition: stroke-dashoffset 0.98s linear;
   will-change: stroke-dashoffset;
 }
 
@@ -394,8 +398,7 @@ select:focus {
   line-height: 1;
 }
 
-.timer-label,
-.timer-status {
+.timer-label {
   color: #667174;
   font-size: 0.82rem;
   font-weight: 800;
@@ -414,8 +417,7 @@ select:focus {
   box-shadow: 0 26px 58px rgba(23, 25, 28, 0.24);
 }
 
-.flip-timer .timer-label,
-.flip-timer .timer-status {
+.flip-timer .timer-label {
   color: #cfd5d7;
 }
 
@@ -488,21 +490,45 @@ select:focus {
   right: 0;
   bottom: 0;
   left: 0;
-  background: linear-gradient(180deg, rgba(126, 208, 226, 0.58), rgba(60, 148, 184, 0.76));
-  transition: height 1.05s linear;
+  min-height: 3%;
+  overflow: visible;
+  background:
+    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(146, 220, 235, 0.5), rgba(57, 147, 184, 0.76));
+  transition: height 1.08s linear;
   will-change: height;
 }
 
 .water-fill::before {
+  display: none;
+}
+
+.water-wave {
   position: absolute;
-  top: -15px;
-  left: -14%;
-  width: 128%;
-  height: 30px;
-  content: "";
-  background: rgba(255, 255, 255, 0.24);
+  top: -19px;
+  left: -24%;
+  width: 148%;
+  height: 38px;
   border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.wave-one {
+  background: rgba(255, 255, 255, 0.28);
   animation: water-wave 5.8s ease-in-out infinite;
+}
+
+.wave-two {
+  top: -13px;
+  background: rgba(112, 206, 229, 0.35);
+  animation: water-wave 7.4s ease-in-out infinite reverse;
+}
+
+.wave-three {
+  top: -7px;
+  background: rgba(255, 255, 255, 0.12);
+  animation: water-drift 10s ease-in-out infinite;
 }
 
 @keyframes water-wave {
@@ -513,6 +539,17 @@ select:focus {
 
   50% {
     transform: translateX(3%) scaleX(0.98);
+  }
+}
+
+@keyframes water-drift {
+  0%,
+  100% {
+    transform: translateX(4%) scaleX(1.06) scaleY(0.78);
+  }
+
+  50% {
+    transform: translateX(-5%) scaleX(0.96) scaleY(1);
   }
 }
 
@@ -548,6 +585,11 @@ select:focus {
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
+  width: min(520px, 100%);
+}
+
+.timer-actions button {
+  flex: 1 1 170px;
 }
 
 .sound-note {
@@ -571,10 +613,11 @@ select:focus {
   border: 1px solid rgba(36, 48, 51, 0.12);
   border-radius: 999px;
   box-shadow: 0 10px 26px rgba(44, 38, 31, 0.08);
+  justify-self: center;
 }
 
 .focus-context {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
@@ -594,6 +637,7 @@ select:focus {
 .focus-fullscreen {
   min-height: 100vh;
   padding: 34px 22px;
+  overflow: hidden;
   color: #f7f8f7;
   background:
     radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--mode-color) 18%, transparent), transparent 36%),
@@ -604,6 +648,7 @@ select:focus {
   min-height: calc(100vh - 68px);
   display: grid;
   place-items: center;
+  position: relative;
 }
 
 .focus-fullscreen .topbar,
@@ -611,37 +656,120 @@ select:focus {
 .focus-fullscreen .mode-tabs,
 .focus-fullscreen .task-select,
 .focus-fullscreen .sound-note,
-.focus-fullscreen .timer-actions {
+.focus-fullscreen .cookie-bank,
+.focus-fullscreen .reward-toast {
   display: none;
 }
 
 .focus-fullscreen .timer-view {
-  width: min(760px, 100%);
-  gap: 26px;
+  width: min(820px, 100%);
+  min-height: calc(100vh - 68px);
+  gap: 22px;
   padding: 0;
+  place-content: center;
+  z-index: 1;
 }
 
 .focus-fullscreen .fullscreen-button {
+  position: fixed;
+  right: clamp(14px, 4vw, 34px);
+  top: clamp(14px, 4vw, 34px);
+  z-index: 3;
   color: #f6f7f5;
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.18);
 }
 
-.focus-fullscreen .cookie-bank,
+.focus-fullscreen .focus-context {
+  display: flex;
+  position: relative;
+  z-index: 2;
+}
+
 .focus-fullscreen .focus-context span {
   color: #f5efe1;
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-.focus-fullscreen .timer-ring,
-.focus-fullscreen .water-timer {
-  width: min(74vh, 520px);
+.focus-fullscreen .timer-ring {
+  width: min(74vmin, 560px);
   max-width: 88vw;
+}
+
+.focus-fullscreen .timer-actions {
+  position: relative;
+  z-index: 2;
+  width: min(460px, 92vw);
+}
+
+.focus-fullscreen .timer-actions button {
+  min-height: 48px;
+}
+
+.focus-fullscreen .water-timer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  aspect-ratio: auto;
+}
+
+.focus-fullscreen .water-vessel {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.focus-fullscreen .water-fill {
+  min-height: 0;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(122, 206, 226, 0.43), rgba(31, 122, 160, 0.78));
+}
+
+.focus-fullscreen .water-content {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  color: #f6fbfd;
+}
+
+.focus-fullscreen .water-content strong {
+  color: #f6fbfd;
+  text-shadow: 0 14px 46px rgba(5, 20, 28, 0.28);
+}
+
+.focus-fullscreen .timer-design-water .focus-context {
+  position: fixed;
+  top: clamp(76px, 12vh, 132px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.focus-fullscreen .timer-design-water .timer-actions {
+  position: fixed;
+  bottom: clamp(26px, 8vh, 74px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.focus-fullscreen .water-shine {
+  inset: 12%;
+  opacity: 0.32;
 }
 
 .focus-fullscreen .flip-timer {
   width: min(88vw, 660px);
+  padding: clamp(18px, 4vw, 34px);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
   transform: scale(1.08);
 }
 
@@ -1289,5 +1417,64 @@ button:disabled {
 
   .timer-actions button {
     width: 100%;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .focus-fullscreen {
+    padding: 12px 18px;
+  }
+
+  .focus-fullscreen .shell,
+  .focus-fullscreen .timer-view {
+    min-height: calc(100vh - 24px);
+  }
+
+  .focus-fullscreen .timer-view {
+    grid-template-columns: minmax(220px, 52vw) minmax(180px, 320px);
+    align-items: center;
+    justify-content: center;
+    column-gap: clamp(16px, 5vw, 42px);
+    row-gap: 14px;
+  }
+
+  .focus-fullscreen .timer-view > .timer-ring,
+  .focus-fullscreen .timer-view > .flip-timer {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .focus-fullscreen .timer-ring {
+    width: min(70vh, 360px);
+  }
+
+  .focus-fullscreen .flip-timer {
+    width: min(54vw, 460px);
+    transform: none;
+  }
+
+  .focus-fullscreen .timer-actions,
+  .focus-fullscreen .focus-context {
+    grid-column: 2;
+    width: min(320px, 38vw);
+  }
+
+  .focus-fullscreen .timer-actions {
+    display: grid;
+  }
+
+  .focus-fullscreen .timer-actions button {
+    width: 100%;
+  }
+
+  .focus-fullscreen .fullscreen-button {
+    top: 10px;
+    right: 12px;
+    min-height: 38px;
+    padding: 8px 12px;
+  }
+
+  .focus-fullscreen .water-content strong {
+    font-size: clamp(3rem, 12vw, 5.8rem);
   }
 }
