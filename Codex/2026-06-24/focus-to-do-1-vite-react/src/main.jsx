@@ -347,6 +347,8 @@ function getCookieRewardBreakdown(minutes, gameState, options = {}) {
   });
   const boostPercent = getTotalBoostPercent(activeBoosts);
   const multiplier = 1 + boostPercent / 100;
+  const rawTotal = (baseReward + itemBonus) * multiplier;
+  const total = Number(minutes) > 0 ? Math.max(1, Math.round(rawTotal)) : 0;
 
   return {
     baseReward,
@@ -354,7 +356,7 @@ function getCookieRewardBreakdown(minutes, gameState, options = {}) {
     activeBoosts,
     boostPercent,
     multiplier,
-    total: Math.max(0, Math.round((baseReward + itemBonus) * multiplier * 10) / 10),
+    total,
   };
 }
 
