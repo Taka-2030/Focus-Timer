@@ -63,15 +63,13 @@
     "viewType": "Stats view type",
     "numbers": "Numbers",
     "bars": "Bars",
-    "line": "Trend",
     "todayFocus": "Today's focus",
     "todayPomodoros": "Today's pomodoros",
     "weekFocus": "This week's focus",
     "completedTasks": "Completed tasks",
     "totalCookies": "Total Cookies",
     "currentStreak": "Current streak",
-    "lastSevenDays": "Last 7 days focus",
-    "focusTrend": "Focus trend"
+    "lastSevenDays": "Last 7 days focus"
   },
   "shop": {
     "facilities": "Facilities",
@@ -87,7 +85,8 @@
     "streakBonus": "Streak Bonus",
     "streakBonusEffect": "Every 3-work-session streak gives +30%",
     "morningBoost": "Morning Boost",
-    "morningBoostEffect": "Morning work rewards +20%"
+    "morningBoostEffect": "Morning work rewards +20%",
+    "categories": "Shop categories"
   },
   "timerDesign": {
     "title": "Timer Designs",
@@ -121,6 +120,14 @@
     "total": "Total Boost +{{percent}}%",
     "active": "Active Boost",
     "none": "No Boost"
+  },
+  "boostOverview": {
+    "title": "Boost overview",
+    "noOwnedUpgrades": "No upgrades purchased yet",
+    "nextStreakBonus": "{{count}} more focus sessions until the next Streak Bonus",
+    "nextReward": "Next work reward",
+    "rewardFormula": "Base {{base}} + facilities {{facilities}} / boost {{multiplier}}%",
+    "purchasedUpgrades": "Purchased upgrades"
   },
   "developer": {
     "title": "Developer Panel",
@@ -169,5 +176,108 @@
   "language": {
     "ja": "日本語",
     "en": "English"
+  },
+  "boostSystem": {
+    "title": "Boost System",
+    "inProgress": "In progress",
+    "todayMission": {
+      "name": "Today's Mission",
+      "description": "Complete 2 work sessions today to activate +10% rewards."
+    },
+    "weeklyChallenge": {
+      "name": "Weekly Challenge",
+      "description": "Complete 8 work sessions this week to activate +15% rewards."
+    },
+    "subjectBonus": {
+      "name": "Priority Focus",
+      "description": "Select a high-priority task to activate +5% rewards."
+    }
+  },
+  "level": {
+    "title": "Focus Level",
+    "current": "Lv.{{level}}",
+    "next": "{{current}}/{{target}} XP - {{remaining}} XP to next level"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "locked": "In progress",
+    "firstFocus": {
+      "name": "First Focus",
+      "description": "Complete your first work session."
+    },
+    "steadyStarter": {
+      "name": "Steady Starter",
+      "description": "Complete 5 work sessions."
+    },
+    "deepWork": {
+      "name": "Deep Work 180",
+      "description": "Reach 180 total focus minutes."
+    },
+    "taskCloser": {
+      "name": "Task Closer",
+      "description": "Complete 3 tasks."
+    },
+    "cookieSaver": {
+      "name": "Cookie Saver",
+      "description": "Earn 100 total Cookies."
+    },
+    "timerCollector": {
+      "name": "Timer Collector",
+      "description": "Own all 3 timer designs."
+    }
+  },
+  "backgroundTheme": {
+    "title": "Background Themes",
+    "owned": "Owned",
+    "use": "Use",
+    "using": "Using",
+    "buy": "Buy",
+    "notEnoughCookies": "Not enough Cookies",
+    "default": {
+      "name": "Default Garden",
+      "description": "A quiet default background that grows with your focus sessions."
+    },
+    "forest": {
+      "name": "Forest Study",
+      "description": "A calm green theme with deeper plant-like growth."
+    },
+    "library": {
+      "name": "Library Desk",
+      "description": "A warm reading-room theme for steady study sessions."
+    },
+    "space": {
+      "name": "Deep Space",
+      "description": "A dark, quiet space theme for late-night focus."
+    }
+  },
+  "sync": {
+    "title": "Cloud Sync",
+    "notConfigured": "Firebase is not configured. Add your VITE_FIREBASE settings first.",
+    "signedInAs": "Signed in as",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 6 characters",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signOut": "Sign out",
+    "syncNow": "Sync now",
+    "working": "Working...",
+    "status": {
+      "checking": "Checking account status",
+      "notConfigured": "Local save only",
+      "signedOut": "Sign in to sync across devices",
+      "signingIn": "Signing in",
+      "loadingCloud": "Loading cloud data",
+      "signedIn": "Cloud sync is active",
+      "error": "Sync needs attention"
+    },
+    "cloudStatus": {
+      "local": "Local",
+      "loading": "Loading",
+      "saving": "Saving",
+      "synced": "Synced",
+      "error": "Error"
+    }
   }
 }

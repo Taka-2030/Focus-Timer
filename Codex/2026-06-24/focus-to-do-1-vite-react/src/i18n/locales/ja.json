@@ -63,15 +63,13 @@
     "viewType": "統計表示タイプ",
     "numbers": "数値表示",
     "bars": "棒グラフ",
-    "line": "時間推移",
     "todayFocus": "今日の集中時間",
     "todayPomodoros": "今日の完了ポモドーロ",
     "weekFocus": "今週の集中時間",
     "completedTasks": "完了タスク数",
     "totalCookies": "累計Cookies",
     "currentStreak": "現在の連続数",
-    "lastSevenDays": "過去7日間の集中時間",
-    "focusTrend": "時間推移"
+    "lastSevenDays": "過去7日間の集中時間"
   },
   "shop": {
     "facilities": "施設",
@@ -87,7 +85,8 @@
     "streakBonus": "Streak Bonus",
     "streakBonusEffect": "連続3ポモドーロ達成ごとに報酬 +30%",
     "morningBoost": "Morning Boost",
-    "morningBoostEffect": "午前中の作業完了報酬 +20%"
+    "morningBoostEffect": "午前中の作業完了報酬 +20%",
+    "categories": "ショップカテゴリ"
   },
   "timerDesign": {
     "title": "Timer Designs",
@@ -121,6 +120,14 @@
     "total": "Total Boost +{{percent}}%",
     "active": "有効なBoost",
     "none": "Boostなし"
+  },
+  "boostOverview": {
+    "title": "Boost概要",
+    "noOwnedUpgrades": "購入済みアップグレードはまだありません",
+    "nextStreakBonus": "次のStreak Bonusまであと{{count}}回",
+    "nextReward": "次の作業完了報酬",
+    "rewardFormula": "基本 {{base}} + 施設 {{facilities}} / Boost {{multiplier}}%",
+    "purchasedUpgrades": "購入済みアップグレード"
   },
   "developer": {
     "title": "Developer Panel",
@@ -169,5 +176,108 @@
   "language": {
     "ja": "日本語",
     "en": "English"
+  },
+  "boostSystem": {
+    "title": "Boost System",
+    "inProgress": "進行中",
+    "todayMission": {
+      "name": "Today Mission",
+      "description": "今日2回の作業セッションを完了すると、報酬+10%が有効になります。"
+    },
+    "weeklyChallenge": {
+      "name": "Weekly Challenge",
+      "description": "今週8回の作業セッションを完了すると、報酬+15%が有効になります。"
+    },
+    "subjectBonus": {
+      "name": "Priority Focus",
+      "description": "優先度Highのタスクを選択すると、報酬+5%が有効になります。"
+    }
+  },
+  "level": {
+    "title": "Focus Level",
+    "current": "Lv.{{level}}",
+    "next": "{{current}}/{{target}} XP - 次のレベルまで{{remaining}} XP"
+  },
+  "achievements": {
+    "title": "実績",
+    "unlocked": "達成済み",
+    "locked": "進行中",
+    "firstFocus": {
+      "name": "First Focus",
+      "description": "最初の作業セッションを完了する。"
+    },
+    "steadyStarter": {
+      "name": "Steady Starter",
+      "description": "作業セッションを5回完了する。"
+    },
+    "deepWork": {
+      "name": "Deep Work 180",
+      "description": "合計集中時間180分に到達する。"
+    },
+    "taskCloser": {
+      "name": "Task Closer",
+      "description": "タスクを3件完了する。"
+    },
+    "cookieSaver": {
+      "name": "Cookie Saver",
+      "description": "累計100 Cookiesを獲得する。"
+    },
+    "timerCollector": {
+      "name": "Timer Collector",
+      "description": "3種類すべてのタイマーデザインを所持する。"
+    }
+  },
+  "backgroundTheme": {
+    "title": "背景テーマ",
+    "owned": "所持済み",
+    "use": "使用する",
+    "using": "使用中",
+    "buy": "購入",
+    "notEnoughCookies": "Cookies不足",
+    "default": {
+      "name": "Default Garden",
+      "description": "集中回数に応じて育つ、落ち着いた標準背景です。"
+    },
+    "forest": {
+      "name": "Forest Study",
+      "description": "深いグリーンで、植物の成長感が強いテーマです。"
+    },
+    "library": {
+      "name": "Library Desk",
+      "description": "読書室のような暖かい色味のテーマです。"
+    },
+    "space": {
+      "name": "Deep Space",
+      "description": "夜の集中に合う、静かな宇宙テーマです。"
+    }
+  },
+  "sync": {
+    "title": "クラウド同期",
+    "notConfigured": "Firebase設定が未設定です。VITE_FIREBASE設定を追加してください。",
+    "signedInAs": "ログイン中",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordHint": "6文字以上",
+    "signIn": "ログイン",
+    "signUp": "アカウント作成",
+    "signOut": "ログアウト",
+    "syncNow": "今すぐ同期",
+    "working": "処理中...",
+    "status": {
+      "checking": "アカウント状態を確認中",
+      "notConfigured": "端末保存のみ",
+      "signedOut": "ログインすると端末間で同期できます",
+      "signingIn": "ログイン中",
+      "loadingCloud": "クラウドデータを読み込み中",
+      "signedIn": "クラウド同期が有効です",
+      "error": "同期の確認が必要です"
+    },
+    "cloudStatus": {
+      "local": "ローカル",
+      "loading": "読み込み中",
+      "saving": "保存中",
+      "synced": "同期済み",
+      "error": "エラー"
+    }
   }
 }

@@ -1,13 +1,5 @@
 export const BACKGROUND_THEMES = ['default', 'forest', 'cyber', 'library', 'space', 'cafe', 'rainy', 'minimal'];
 
-export function getTimePeriod(date = new Date()) {
-  const hour = date.getHours();
-  if (hour >= 5 && hour <= 10) return 'morning';
-  if (hour >= 11 && hour <= 16) return 'day';
-  if (hour >= 17 && hour <= 20) return 'evening';
-  return 'night';
-}
-
 export function calculateGrowthLevel(completedWorkSessions = 0) {
   const count = Math.max(0, Number(completedWorkSessions) || 0);
   if (count >= 50) return 5;
@@ -60,12 +52,20 @@ export function updateBackgroundOnWorkComplete(backgroundState, completedAt = ne
   };
 }
 
-export function getBackgroundClassName(backgroundState, timePeriod = getTimePeriod()) {
+export function getBackgroundClassName(
+  backgroundState,
+  growthLevelOverride = null,
+) {
   const current = normalizeBackgroundState(backgroundState);
+  const previewGrowthLevel = Number(growthLevelOverride);
+  const growthLevel =
+    previewGrowthLevel >= 1 && previewGrowthLevel <= 5
+      ? previewGrowthLevel
+      : current.growthLevel;
+
   return [
     'background-layer',
     `bg-theme-${current.theme}`,
-    `bg-period-${timePeriod}`,
-    `bg-growth-level-${current.growthLevel}`,
+    `bg-growth-level-${growthLevel}`,
   ].join(' ');
 }

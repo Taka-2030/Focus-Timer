@@ -23,6 +23,7 @@ export const defaultGameState = {
   totalCookiesEarned: 0,
   selectedTimerDesign: 'ring',
   ownedTimerDesigns: ['ring'],
+  ownedBackgroundThemes: ['default'],
 };
 
 const defaultData = {
@@ -135,7 +136,7 @@ export function resetGameStateForDebug() {
   return nextGameState;
 }
 
-function normalizeAppData(data) {
+export function normalizeAppData(data) {
   return {
     ...defaultData,
     ...(data ?? {}),
@@ -155,6 +156,7 @@ function normalizeAppData(data) {
         : [],
       selectedTimerDesign: data?.gameState?.selectedTimerDesign || 'ring',
       ownedTimerDesigns: normalizeOwnedTimerDesigns(data?.gameState?.ownedTimerDesigns),
+      ownedBackgroundThemes: normalizeOwnedBackgroundThemes(data?.gameState?.ownedBackgroundThemes),
     },
   };
 }
@@ -162,6 +164,11 @@ function normalizeAppData(data) {
 function normalizeOwnedTimerDesigns(ownedTimerDesigns) {
   const owned = Array.isArray(ownedTimerDesigns) ? ownedTimerDesigns : [];
   return Array.from(new Set(['ring', ...owned]));
+}
+
+function normalizeOwnedBackgroundThemes(ownedBackgroundThemes) {
+  const owned = Array.isArray(ownedBackgroundThemes) ? ownedBackgroundThemes : [];
+  return Array.from(new Set(['default', ...owned]));
 }
 
 function getInitialLanguage() {

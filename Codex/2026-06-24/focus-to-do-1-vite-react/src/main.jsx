@@ -22,16 +22,24 @@ import { useTranslation } from 'react-i18next';
 import {
   addCookiesForDebug,
   loadAppData,
+  normalizeAppData,
   resetCookiesForDebug,
   resetGameStateForDebug,
   resetTimerDesignsForDebug,
   saveAppData,
   unlockAllTimerDesignsForDebug,
 } from './services/storageService';
+import {
+  createAccountWithEmail,
+  signInWithEmail,
+  signOutCurrentUser,
+  subscribeToAuthState,
+} from './services/authService';
+import { loadCloudAppData, saveCloudAppData } from './services/cloudSyncService';
+import { isFirebaseConfigured } from './services/firebaseClient';
 import { getProductionDebugMode } from './services/debugModeService';
 import {
   getBackgroundClassName,
-  getTimePeriod,
   updateBackgroundOnWorkComplete,
 } from './services/backgroundService';
 import './styles.css';
@@ -68,6 +76,33 @@ const shopUpgrades = [
   },
 ];
 
+const backgroundThemeItems = [
+  {
+    id: 'default',
+    nameKey: 'backgroundTheme.default.name',
+    descriptionKey: 'backgroundTheme.default.description',
+    price: 0,
+  },
+  {
+    id: 'forest',
+    nameKey: 'backgroundTheme.forest.name',
+    descriptionKey: 'backgroundTheme.forest.description',
+    price: 200,
+  },
+  {
+    id: 'library',
+    nameKey: 'backgroundTheme.library.name',
+    descriptionKey: 'backgroundTheme.library.description',
+    price: 450,
+  },
+  {
+    id: 'space',
+    nameKey: 'backgroundTheme.space.name',
+    descriptionKey: 'backgroundTheme.space.description',
+    price: 800,
+  },
+];
+
 const navItems = [
   { id: 'tasks', labelKey: 'nav.tasks', icon: ListTodo },
   { id: 'timer', labelKey: 'nav.timer', icon: Clock3 },
@@ -82,10 +117,81 @@ const modes = {
   longBreak: { labelKey: 'timer.longBreak', settingsKey: 'longBreakMinutes', color: '#4d78d8' },
 };
 
+const icons = {
+  cookie: '\uD83C\uDF6A',
+  sparkle: '\u2728',
+  morning: '\uD83C\uDF05',
+  streak: '\uD83D\uDD25',
+  target: '\uD83C\uDFAF',
+  trophy: '\uD83C\uDFC6',
+  priority: '\uD83D\uDCCC',
+};
+
 const statsTabs = [
   { id: 'numbers', labelKey: 'stats.numbers' },
   { id: 'bars', labelKey: 'stats.bars' },
-  { id: 'line', labelKey: 'stats.line' },
+];
+
+const shopTabs = [
+  { id: 'facilities', labelKey: 'shop.facilities' },
+  { id: 'upgrades', labelKey: 'shop.upgrades' },
+  { id: 'timerDesigns', labelKey: 'timerDesign.title' },
+  { id: 'backgrounds', labelKey: 'backgroundTheme.title' },
+];
+
+const achievementDefinitions = [
+  {
+    id: 'firstFocus',
+    nameKey: 'achievements.firstFocus.name',
+    descriptionKey: 'achievements.firstFocus.description',
+    target: 1,
+    getValue: (metrics) => metrics.totalWorkSessions,
+  },
+  {
+    id: 'steadyStarter',
+    nameKey: 'achievements.steadyStarter.name',
+    descriptionKey: 'achievements.steadyStarter.description',
+    target: 5,
+    getValue: (metrics) => metrics.totalWorkSessions,
+  },
+  {
+    id: 'deepWork',
+    nameKey: 'achievements.deepWork.name',
+    descriptionKey: 'achievements.deepWork.description',
+    target: 180,
+    unitKey: 'common.minutes',
+    getValue: (metrics) => metrics.totalFocusMinutes,
+  },
+  {
+    id: 'taskCloser',
+    nameKey: 'achievements.taskCloser.name',
+    descriptionKey: 'achievements.taskCloser.description',
+    target: 3,
+    getValue: (metrics) => metrics.completedTasks,
+  },
+  {
+    id: 'cookieSaver',
+    nameKey: 'achievements.cookieSaver.name',
+    descriptionKey: 'achievements.cookieSaver.description',
+    target: 100,
+    getValue: (metrics) => metrics.totalCookiesEarned,
+  },
+  {
+    id: 'timerCollector',
+    nameKey: 'achievements.timerCollector.name',
+    descriptionKey: 'achievements.timerCollector.description',
+    target: 3,
+    getValue: (metrics) => metrics.ownedTimerDesigns,
+  },
+];
+
+const backgroundPreviewLevels = [
+  { id: 'auto', label: 'Auto' },
+  { id: 1, label: 'Lv1' },
+  { id: 2, label: 'Lv2' },
+  { id: 3, label: 'Lv3' },
+  { id: 4, label: 'Lv4' },
+  { id: 5, label: 'Lv5' },
 ];
 
 function minutesToSeconds(minutes) {
@@ -144,33 +250,116 @@ function hasUpgrade(gameState, upgradeId) {
   return gameState.purchasedUpgrades.includes(upgradeId);
 }
 
-function calculateCookieReward(minutes, gameState, completedAt = new Date()) {
-  const baseReward = Number(minutes) * 0.4;
-  const itemBonus = getItemBonus(gameState.purchasedItems);
-  let reward = baseReward + itemBonus;
-  let multiplier = 1;
-  const nextStreak = gameState.currentStreak + 1;
-
-  if (hasUpgrade(gameState, 'focusBoost1')) multiplier += 0.1;
-  if (hasUpgrade(gameState, 'morningBoost') && completedAt.getHours() < 12) multiplier += 0.2;
-  if (hasUpgrade(gameState, 'streakBonus') && nextStreak % 3 === 0) multiplier += 0.3;
-
-  reward *= multiplier;
-  return Math.max(0, Math.round(reward * 10) / 10);
+function getTodayWorkCount(sessions, date = new Date()) {
+  const key = toDateKey(date);
+  return sessions.filter(
+    (session) => session.mode === 'work' && toDateKey(new Date(session.completedAt)) === key,
+  ).length;
 }
 
-function getActiveBoostDetails(gameState, date = new Date()) {
+function getWeekWorkCount(sessions, date = new Date()) {
+  const weekStart = getWeekStart(date);
+  return sessions.filter(
+    (session) => session.mode === 'work' && new Date(session.completedAt) >= weekStart,
+  ).length;
+}
+
+function getActiveBoostDetails(gameState, options = {}) {
+  const {
+    sessions = [],
+    selectedTask = null,
+    date = new Date(),
+  } = options;
   const boosts = [];
+  const todayWorkCount = getTodayWorkCount(sessions, date);
+  const weekWorkCount = getWeekWorkCount(sessions, date);
+
   if (hasUpgrade(gameState, 'focusBoost1')) {
-    boosts.push({ id: 'focusBoost1', labelKey: 'shop.focusBoost1', icon: '✨', percent: 10 });
+    boosts.push({ id: 'focusBoost1', labelKey: 'shop.focusBoost1', icon: icons.sparkle, percent: 10 });
   }
   if (hasUpgrade(gameState, 'morningBoost') && date.getHours() < 12) {
-    boosts.push({ id: 'morningBoost', labelKey: 'shop.morningBoost', icon: '🌅', percent: 20 });
+    boosts.push({ id: 'morningBoost', labelKey: 'shop.morningBoost', icon: icons.morning, percent: 20 });
   }
   if (hasUpgrade(gameState, 'streakBonus') && (gameState.currentStreak + 1) % 3 === 0) {
-    boosts.push({ id: 'streakBonus', labelKey: 'shop.streakBonus', icon: '🔥', percent: 30 });
+    boosts.push({ id: 'streakBonus', labelKey: 'shop.streakBonus', icon: icons.streak, percent: 30 });
   }
+  if (todayWorkCount >= 2) {
+    boosts.push({ id: 'todayMission', labelKey: 'boostSystem.todayMission.name', icon: icons.target, percent: 10 });
+  }
+  if (weekWorkCount >= 8) {
+    boosts.push({ id: 'weeklyChallenge', labelKey: 'boostSystem.weeklyChallenge.name', icon: icons.trophy, percent: 15 });
+  }
+  if (selectedTask?.priority === 'high') {
+    boosts.push({ id: 'subjectBonus', labelKey: 'boostSystem.subjectBonus.name', icon: icons.priority, percent: 5 });
+  }
+
   return boosts;
+}
+
+function getBoostStatusCards(gameState, options = {}) {
+  const { sessions = [], selectedTask = null, date = new Date() } = options;
+  const todayWorkCount = getTodayWorkCount(sessions, date);
+  const weekWorkCount = getWeekWorkCount(sessions, date);
+  const statusCards = [
+    {
+      id: 'todayMission',
+      icon: icons.target,
+      nameKey: 'boostSystem.todayMission.name',
+      descriptionKey: 'boostSystem.todayMission.description',
+      percent: 10,
+      current: Math.min(todayWorkCount, 2),
+      target: 2,
+      active: todayWorkCount >= 2,
+    },
+    {
+      id: 'weeklyChallenge',
+      icon: icons.trophy,
+      nameKey: 'boostSystem.weeklyChallenge.name',
+      descriptionKey: 'boostSystem.weeklyChallenge.description',
+      percent: 15,
+      current: Math.min(weekWorkCount, 8),
+      target: 8,
+      active: weekWorkCount >= 8,
+    },
+    {
+      id: 'subjectBonus',
+      icon: icons.priority,
+      nameKey: 'boostSystem.subjectBonus.name',
+      descriptionKey: 'boostSystem.subjectBonus.description',
+      percent: 5,
+      current: selectedTask?.priority === 'high' ? 1 : 0,
+      target: 1,
+      active: selectedTask?.priority === 'high',
+    },
+  ];
+
+  return statusCards;
+}
+
+function getCookieRewardBreakdown(minutes, gameState, options = {}) {
+  const completedAt = options.completedAt ?? new Date();
+  const baseReward = Number(minutes) * 0.4;
+  const itemBonus = getItemBonus(gameState.purchasedItems);
+  const activeBoosts = getActiveBoostDetails(gameState, {
+    sessions: options.sessions ?? [],
+    selectedTask: options.selectedTask ?? null,
+    date: completedAt,
+  });
+  const boostPercent = getTotalBoostPercent(activeBoosts);
+  const multiplier = 1 + boostPercent / 100;
+
+  return {
+    baseReward,
+    itemBonus,
+    activeBoosts,
+    boostPercent,
+    multiplier,
+    total: Math.max(0, Math.round((baseReward + itemBonus) * multiplier * 10) / 10),
+  };
+}
+
+function calculateCookieReward(minutes, gameState, options = {}) {
+  return getCookieRewardBreakdown(minutes, gameState, options).total;
 }
 
 function getTotalBoostPercent(boosts) {
@@ -192,6 +381,58 @@ function getLastSevenDays(sessions) {
 
     return { key, label: formatDayLabel(date), minutes };
   });
+}
+
+function getFocusMetrics(tasks, sessions, gameState) {
+  const workSessions = sessions.filter((session) => session.mode === 'work');
+  const totalFocusMinutes = workSessions.reduce(
+    (sum, session) => sum + Number(session.minutes || 0),
+    0,
+  );
+  const completedTasks = tasks.filter((task) => task.completed).length;
+
+  return {
+    totalWorkSessions: workSessions.length,
+    totalFocusMinutes,
+    completedTasks,
+    currentStreak: Number(gameState.currentStreak || 0),
+    totalCookiesEarned: Number(gameState.totalCookiesEarned || 0),
+    ownedTimerDesigns: Array.isArray(gameState.ownedTimerDesigns)
+      ? gameState.ownedTimerDesigns.length
+      : 1,
+  };
+}
+
+function getAchievementProgress(metrics) {
+  return achievementDefinitions.map((achievement) => {
+    const value = Math.max(0, Number(achievement.getValue(metrics)) || 0);
+    const progress = Math.min(100, (value / achievement.target) * 100);
+    return {
+      ...achievement,
+      value,
+      progress,
+      unlocked: value >= achievement.target,
+    };
+  });
+}
+
+function getFocusLevel(metrics) {
+  const xp =
+    metrics.totalFocusMinutes +
+    metrics.totalWorkSessions * 5 +
+    metrics.completedTasks * 10;
+  const xpPerLevel = 120;
+  const level = Math.floor(xp / xpPerLevel) + 1;
+  const currentLevelXp = xp % xpPerLevel;
+
+  return {
+    level,
+    xp,
+    xpPerLevel,
+    currentLevelXp,
+    nextLevelXp: xpPerLevel - currentLevelXp,
+    progress: (currentLevelXp / xpPerLevel) * 100,
+  };
 }
 
 function App() {
@@ -216,14 +457,42 @@ function App() {
   const [isProductionDebugEnabled] = React.useState(() => getProductionDebugMode());
   const [timerDebugFrame, setTimerDebugFrame] = React.useState(null);
   const [lastTaskDebug, setLastTaskDebug] = React.useState(null);
-  const [currentTimePeriod, setCurrentTimePeriod] = React.useState(() => getTimePeriod());
+  const [backgroundPreview, setBackgroundPreview] = React.useState({
+    growthLevel: 'auto',
+  });
+  const [authUser, setAuthUser] = React.useState(null);
+  const [authStatus, setAuthStatus] = React.useState(
+    isFirebaseConfigured ? 'checking' : 'notConfigured',
+  );
+  const [authError, setAuthError] = React.useState('');
+  const [cloudSyncStatus, setCloudSyncStatus] = React.useState('local');
   const shouldAutoStartRef = React.useRef(false);
+  const isApplyingCloudDataRef = React.useRef(false);
+  const cloudReadyRef = React.useRef(false);
+  const cloudSaveTimerRef = React.useRef(null);
 
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
   const activeMode = modes[mode];
   const modeColor = mode === 'work' ? settings.themeColor : activeMode.color;
   const currentTotalSeconds = minutesToSeconds(settings[modes[mode].settingsKey]);
-  const backgroundClassName = getBackgroundClassName(backgroundState, currentTimePeriod);
+  const effectiveGrowthLevel =
+    backgroundPreview.growthLevel === 'auto'
+      ? backgroundState.growthLevel
+      : Number(backgroundPreview.growthLevel);
+  const backgroundClassName = getBackgroundClassName(
+    backgroundState,
+    effectiveGrowthLevel,
+  );
+
+  const appData = React.useMemo(
+    () => normalizeAppData({ tasks, sessions, settings, gameState, backgroundState }),
+    [tasks, sessions, settings, gameState, backgroundState],
+  );
+  const appDataRef = React.useRef(appData);
+
+  React.useEffect(() => {
+    appDataRef.current = appData;
+  }, [appData]);
 
   const handleTimerDebugFrame = React.useCallback(
     (frame) => {
@@ -234,17 +503,112 @@ function App() {
   );
 
   React.useEffect(() => {
-    saveAppData({ tasks, sessions, settings, gameState, backgroundState });
-  }, [tasks, sessions, settings, gameState, backgroundState]);
+    saveAppData(appData);
+
+    if (!authUser || !cloudReadyRef.current || isApplyingCloudDataRef.current) return undefined;
+
+    setCloudSyncStatus('saving');
+    window.clearTimeout(cloudSaveTimerRef.current);
+    cloudSaveTimerRef.current = window.setTimeout(() => {
+      saveCloudAppData(authUser.uid, appData)
+        .then(() => setCloudSyncStatus('synced'))
+        .catch((error) => {
+          setCloudSyncStatus('error');
+          setAuthError(error.message);
+        });
+    }, 700);
+
+    return () => window.clearTimeout(cloudSaveTimerRef.current);
+  }, [appData, authUser]);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeToAuthState(async (user) => {
+      setAuthUser(user);
+      setAuthError('');
+
+      if (!user) {
+        cloudReadyRef.current = false;
+        setAuthStatus(isFirebaseConfigured ? 'signedOut' : 'notConfigured');
+        setCloudSyncStatus('local');
+        return;
+      }
+
+      setAuthStatus('loadingCloud');
+      setCloudSyncStatus('loading');
+
+      try {
+        const cloudData = await loadCloudAppData(user.uid);
+
+        if (cloudData) {
+          isApplyingCloudDataRef.current = true;
+          setTasks(cloudData.tasks);
+          setSessions(cloudData.sessions);
+          setSettings(cloudData.settings);
+          setGameState(cloudData.gameState);
+          setBackgroundState(cloudData.backgroundState);
+          window.setTimeout(() => {
+            isApplyingCloudDataRef.current = false;
+          }, 0);
+        } else {
+          await saveCloudAppData(user.uid, appDataRef.current);
+        }
+
+        cloudReadyRef.current = true;
+        setAuthStatus('signedIn');
+        setCloudSyncStatus('synced');
+      } catch (error) {
+        cloudReadyRef.current = false;
+        setAuthStatus('error');
+        setCloudSyncStatus('error');
+        setAuthError(error.message);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  async function handleSignIn(email, password) {
+    setAuthError('');
+    setAuthStatus('signingIn');
+    try {
+      await signInWithEmail(email, password);
+    } catch (error) {
+      setAuthStatus('signedOut');
+      setAuthError(error.message);
+    }
+  }
+
+  async function handleSignUp(email, password) {
+    setAuthError('');
+    setAuthStatus('signingIn');
+    try {
+      await createAccountWithEmail(email, password);
+    } catch (error) {
+      setAuthStatus('signedOut');
+      setAuthError(error.message);
+    }
+  }
+
+  async function handleSignOut() {
+    setAuthError('');
+    await signOutCurrentUser();
+  }
+
+  async function handleManualCloudSync() {
+    if (!authUser) return;
+    setCloudSyncStatus('saving');
+    try {
+      await saveCloudAppData(authUser.uid, appData);
+      setCloudSyncStatus('synced');
+    } catch (error) {
+      setCloudSyncStatus('error');
+      setAuthError(error.message);
+    }
+  }
 
   React.useEffect(() => {
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
-
-  React.useEffect(() => {
-    const id = window.setInterval(() => setCurrentTimePeriod(getTimePeriod()), 60 * 1000);
-    return () => window.clearInterval(id);
-  }, []);
 
   React.useEffect(() => {
     function syncFullscreenState() {
@@ -379,7 +743,11 @@ function App() {
     setSessions((current) => [session, ...current]);
 
     if (currentMode === 'work') {
-      const reward = calculateCookieReward(minutes, gameState, completedAt);
+      const reward = calculateCookieReward(minutes, gameState, {
+        sessions,
+        selectedTask,
+        completedAt,
+      });
       setGameState((current) => ({
         ...current,
         cookies: current.cookies + reward,
@@ -475,6 +843,25 @@ function App() {
     }));
   }
 
+  function buyBackgroundTheme(theme) {
+    const ownedBackgroundThemes = gameState.ownedBackgroundThemes ?? ['default'];
+    if (gameState.cookies < theme.price || ownedBackgroundThemes.includes(theme.id)) return;
+    setGameState((current) => ({
+      ...current,
+      cookies: current.cookies - theme.price,
+      ownedBackgroundThemes: Array.from(
+        new Set([...(current.ownedBackgroundThemes ?? ['default']), theme.id]),
+      ),
+    }));
+    setBackgroundState((current) => ({ ...current, theme: theme.id }));
+  }
+
+  function selectBackgroundTheme(themeId) {
+    const ownedBackgroundThemes = gameState.ownedBackgroundThemes ?? ['default'];
+    if (!ownedBackgroundThemes.includes(themeId)) return;
+    setBackgroundState((current) => ({ ...current, theme: themeId }));
+  }
+
   return (
     <div
       className={`app view-${activeView} ${
@@ -482,15 +869,14 @@ function App() {
       }`}
       style={{ '--theme': settings.themeColor, '--mode-color': modeColor }}
     >
-      <BackgroundLayer backgroundState={backgroundState} timePeriod={currentTimePeriod} />
+      <BackgroundLayer
+        backgroundState={backgroundState}
+        growthLevel={effectiveGrowthLevel}
+      />
       <main className="shell">
         <header className="topbar">
-          <div>
-            <p className="eyebrow">{t('app.name')}</p>
-            <h1>{t(navItems.find((item) => item.id === activeView)?.labelKey)}</h1>
-          </div>
           <div className="focus-pill cookie-pill">
-            🍪 {formatCookies(gameState.cookies)} {t('app.cookies')}
+            {icons.cookie} {formatCookies(gameState.cookies)} {t('app.cookies')}
           </div>
           <div className="focus-pill">
             <Clock3 size={18} />
@@ -507,12 +893,14 @@ function App() {
             onDeleteTask={deleteTask}
             onSelectTask={setSelectedTaskId}
             onTaskDebug={isProductionDebugEnabled ? setLastTaskDebug : undefined}
+            showTaskDebug={isProductionDebugEnabled}
           />
         )}
 
         {activeView === 'timer' && (
           <TimerView
             tasks={tasks}
+            sessions={sessions}
             selectedTaskId={selectedTaskId}
             setSelectedTaskId={setSelectedTaskId}
             mode={mode}
@@ -539,14 +927,25 @@ function App() {
         {activeView === 'shop' && (
           <ShopView
             gameState={gameState}
+            backgroundState={backgroundState}
             onBuyItem={buyItem}
             onBuyUpgrade={buyUpgrade}
             onBuyTimerDesign={buyTimerDesign}
             onSelectTimerDesign={selectTimerDesign}
+            onBuyBackgroundTheme={buyBackgroundTheme}
+            onSelectBackgroundTheme={selectBackgroundTheme}
           />
         )}
 
-        {activeView === 'stats' && <StatsView tasks={tasks} sessions={sessions} gameState={gameState} />}
+        {activeView === 'stats' && (
+          <StatsView
+            tasks={tasks}
+            sessions={sessions}
+            gameState={gameState}
+            workMinutes={settings.workMinutes}
+            selectedTask={selectedTask}
+          />
+        )}
 
         {activeView === 'settings' && (
           <SettingsView
@@ -556,6 +955,18 @@ function App() {
             currentLanguage={i18n.language}
             gameState={gameState}
             setGameState={setGameState}
+            backgroundState={backgroundState}
+            backgroundPreview={backgroundPreview}
+            setBackgroundPreview={setBackgroundPreview}
+            effectiveGrowthLevel={effectiveGrowthLevel}
+            authUser={authUser}
+            authStatus={authStatus}
+            authError={authError}
+            cloudSyncStatus={cloudSyncStatus}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            onSignOut={handleSignOut}
+            onManualCloudSync={handleManualCloudSync}
           />
         )}
       </main>
@@ -572,7 +983,8 @@ function App() {
           tasksLength={tasks.length}
           taskDebug={lastTaskDebug}
           backgroundState={backgroundState}
-          timePeriod={currentTimePeriod}
+          backgroundPreview={backgroundPreview}
+          effectiveGrowthLevel={effectiveGrowthLevel}
           backgroundClassName={backgroundClassName}
         />
       )}
@@ -608,7 +1020,8 @@ function ProductionDebugPanel({
   tasksLength,
   taskDebug,
   backgroundState,
-  timePeriod,
+  backgroundPreview,
+  effectiveGrowthLevel,
   backgroundClassName,
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -685,8 +1098,12 @@ function ProductionDebugPanel({
 
           <ProductionDebugSection title="Background">
             <ProductionDebugRow label="backgroundTheme" value={backgroundState.theme} />
-            <ProductionDebugRow label="timePeriod" value={timePeriod} />
             <ProductionDebugRow label="growthLevel" value={backgroundState.growthLevel} />
+            <ProductionDebugRow
+              label="previewGrowthLevel"
+              value={backgroundPreview.growthLevel}
+            />
+            <ProductionDebugRow label="effectiveGrowthLevel" value={effectiveGrowthLevel} />
             <ProductionDebugRow
               label="completedWorkSessions"
               value={backgroundState.completedWorkSessions}
@@ -735,6 +1152,7 @@ function TasksView({
   onDeleteTask,
   onSelectTask,
   onTaskDebug,
+  showTaskDebug = false,
 }) {
   const { t } = useTranslation();
   const initialDraft = {
@@ -774,10 +1192,10 @@ function TasksView({
     }
 
     onTaskDebug?.((current) => withAfterRender(current));
-    if (import.meta.env.DEV) {
+    if (showTaskDebug) {
       setTaskDebug((current) => withAfterRender(current));
     }
-  }, [tasks.length, onTaskDebug]);
+  }, [tasks.length, onTaskDebug, showTaskDebug]);
 
   function updateTaskDebug(source, values, status, details = {}) {
     const beforeLength = details.beforeLength ?? tasks.length;
@@ -795,7 +1213,7 @@ function TasksView({
       time: new Date().toLocaleTimeString(),
     };
     onTaskDebug?.(debugPayload);
-    if (!import.meta.env.DEV) return;
+    if (!showTaskDebug) return;
     setTaskDebug(debugPayload);
   }
 
@@ -928,7 +1346,7 @@ function TasksView({
           <Plus size={18} />
           {t('common.add')}
         </button>
-        {import.meta.env.DEV && taskDebug && (
+        {showTaskDebug && taskDebug && (
           <div className="task-debug-panel" aria-live="polite">
             <strong>DEBUG</strong>
             <span>{taskDebug.status}</span>
@@ -993,6 +1411,7 @@ function TasksView({
 
 function TimerView({
   tasks,
+  sessions,
   selectedTaskId,
   setSelectedTaskId,
   mode,
@@ -1019,23 +1438,47 @@ function TimerView({
   const ownedTimerDesigns = TIMER_DESIGNS.filter((design) =>
     gameState.ownedTimerDesigns.includes(design.id),
   );
-  const activeBoosts = getActiveBoostDetails(gameState);
+  const activeBoosts = getActiveBoostDetails(gameState, { sessions, selectedTask });
   const totalBoostPercent = getTotalBoostPercent(activeBoosts);
   const boostChipLabel =
     activeBoosts.length > 1
-      ? `✨ ${t('boost.total', { percent: totalBoostPercent })}`
+      ? `${icons.sparkle} ${t('boost.total', { percent: totalBoostPercent })}`
       : activeBoosts.length === 1
         ? `${activeBoosts[0].icon} ${t(activeBoosts[0].labelKey)} +${activeBoosts[0].percent}%`
-        : `✨ ${t('boost.none')}`;
+        : `${icons.sparkle} ${t('boost.none')}`;
 
   return (
     <section className={`timer-view timer-design-${timerDesignId}`}>
-      <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
-        {isFullscreen ? t('focus.exitFullscreen') : t('timer.fullscreen')}
-      </button>
+      <TimerRenderer
+        timerDesignId={timerDesignId}
+        secondsLeft={secondsLeft}
+        totalSeconds={totalSeconds}
+        isRunning={isRunning}
+        resetKey={timerAnimationResetKey}
+        formatTime={formatTime}
+        onDebugFrame={onTimerDebugFrame}
+      />
+
+      {rewardToast && (
+        <div className="reward-toast" key={rewardToast.id}>
+          {t('timer.reward', { amount: formatCookies(rewardToast.amount) })}
+        </div>
+      )}
+
+      <div className="timer-actions">
+        <button className="primary-button large" onClick={isRunning ? pauseTimer : startTimer} type="button">
+          {isRunning ? <Pause size={20} /> : <Play size={20} />}
+          {isRunning ? t('timer.pause') : t('timer.start')}
+        </button>
+        <button className="secondary-button large" onClick={resetTimer} type="button">
+          <RotateCcw size={20} />
+          {t('timer.reset')}
+        </button>
+      </div>
+
       <div className="timer-compact-info">
         <div className="mini-cookie-pill" aria-label={t('cookies.label')}>
-          {'\uD83C\uDF6A'} {formatCookies(gameState.cookies)}
+          {icons.cookie} {formatCookies(gameState.cookies)}
         </div>
         <button
           className="boost-chip"
@@ -1054,98 +1497,102 @@ function TimerView({
             ))}
           </div>
         )}
+        <button className="fullscreen-button" type="button" onClick={toggleFullscreen}>
+          {isFullscreen ? t('focus.exitFullscreen') : t('timer.fullscreen')}
+        </button>
       </div>
       <div className="focus-context">
         <span>{selectedTask ? selectedTask.title : t('app.noTask')}</span>
       </div>
-      {rewardToast && (
-        <div className="reward-toast" key={rewardToast.id}>
-          {t('timer.reward', { amount: formatCookies(rewardToast.amount) })}
-        </div>
-      )}
 
-      <div className="mode-tabs" role="tablist" aria-label={t('timer.mode')}>
-        {Object.entries(modes).map(([key, item]) => (
-          <button
-            key={key}
-            className={mode === key ? 'active' : ''}
-            onClick={() => setMode(key)}
-            type="button"
-          >
-            {t(item.labelKey)}
-          </button>
-        ))}
-      </div>
-
-      <TimerRenderer
-        timerDesignId={timerDesignId}
-        secondsLeft={secondsLeft}
-        totalSeconds={totalSeconds}
-        isRunning={isRunning}
-        resetKey={timerAnimationResetKey}
-        formatTime={formatTime}
-        onDebugFrame={onTimerDebugFrame}
-      />
-
-      <div className="timer-design-switch" aria-label={t('timerDesign.switch')}>
-        <span>{t('timerDesign.switch')}</span>
-        <div className="timer-design-chips">
-          {ownedTimerDesigns.map((design) => (
+      <div className="timer-options">
+        <div className="mode-tabs" role="tablist" aria-label={t('timer.mode')}>
+          {Object.entries(modes).map(([key, item]) => (
             <button
-              key={design.id}
-              className={timerDesignId === design.id ? 'active' : ''}
+              key={key}
+              className={mode === key ? 'active' : ''}
+              onClick={() => setMode(key)}
               type="button"
-              onClick={() => onSelectTimerDesign(design.id)}
-              aria-label={t('timerDesign.select', { name: t(design.nameKey) })}
             >
-              {t(design.nameKey)}
+              {t(item.labelKey)}
             </button>
           ))}
         </div>
-      </div>
 
-      <label className="task-select">
-        {t('timer.focusTask')}
-        <select value={selectedTaskId} onChange={(event) => setSelectedTaskId(event.target.value)}>
-          <option value="">{t('timer.noTask')}</option>
-          {tasks
-            .filter((task) => !task.completed)
-            .map((task) => (
-              <option key={task.id} value={task.id}>
-                {task.title}
-              </option>
+        <div className="timer-design-switch" aria-label={t('timerDesign.switch')}>
+          <span>{t('timerDesign.switch')}</span>
+          <div className="timer-design-chips">
+            {ownedTimerDesigns.map((design) => (
+              <button
+                key={design.id}
+                className={timerDesignId === design.id ? 'active' : ''}
+                type="button"
+                onClick={() => onSelectTimerDesign(design.id)}
+                aria-label={t('timerDesign.select', { name: t(design.nameKey) })}
+              >
+                {t(design.nameKey)}
+              </button>
             ))}
-        </select>
-      </label>
+          </div>
+        </div>
+
+        <label className="task-select">
+          {t('timer.focusTask')}
+          <select value={selectedTaskId} onChange={(event) => setSelectedTaskId(event.target.value)}>
+            <option value="">{t('timer.noTask')}</option>
+            {tasks
+              .filter((task) => !task.completed)
+              .map((task) => (
+                <option key={task.id} value={task.id}>
+                  {task.title}
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
 
       <div className="sound-note">
         <Volume2 size={17} />
         {audioReady ? t('timer.soundReady') : t('timer.soundLocked')}
       </div>
-
-      <div className="timer-actions">
-        <button className="primary-button large" onClick={isRunning ? pauseTimer : startTimer} type="button">
-          {isRunning ? <Pause size={20} /> : <Play size={20} />}
-          {isRunning ? t('timer.pause') : t('timer.start')}
-        </button>
-        <button className="secondary-button large" onClick={resetTimer} type="button">
-          <RotateCcw size={20} />
-          {t('timer.reset')}
-        </button>
-      </div>
     </section>
   );
 }
 
-function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSelectTimerDesign }) {
+function ShopView({
+  gameState,
+  backgroundState,
+  onBuyItem,
+  onBuyUpgrade,
+  onBuyTimerDesign,
+  onSelectTimerDesign,
+  onBuyBackgroundTheme,
+  onSelectBackgroundTheme,
+}) {
   const { t } = useTranslation();
+  const [activeShopTab, setActiveShopTab] = React.useState('facilities');
   return (
     <section className="view-stack">
       <div className="shop-summary">
-        <span>{t('common.totalEarned')}</span>
-        <strong>{formatCookies(gameState.totalCookiesEarned)}</strong>
+        <span>{t('cookies.label')}</span>
+        <strong>{icons.cookie} {formatCookies(gameState.cookies)}</strong>
+        <small>{t('common.totalEarned')}: {formatCookies(gameState.totalCookiesEarned)}</small>
       </div>
 
+      <div className="shop-tabs" role="tablist" aria-label={t('shop.categories')}>
+        {shopTabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={activeShopTab === tab.id ? 'active' : ''}
+            type="button"
+            onClick={() => setActiveShopTab(tab.id)}
+          >
+            {t(tab.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {activeShopTab === 'facilities' && (
       <div className="shop-section">
         <h2>{t('shop.facilities')}</h2>
         <div className="shop-grid">
@@ -1159,7 +1606,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
                   <p>{t('shop.itemEffect', { bonus: item.bonus })}</p>
                 </div>
                 <div className="shop-meta">
-                  <span>{t('common.price')}: 🍪 {item.price.toLocaleString()}</span>
+                  <span>{t('common.price')}: {icons.cookie} {item.price.toLocaleString()}</span>
                   <span>{t('common.owned')}: {count}</span>
                 </div>
                 <button
@@ -1175,7 +1622,9 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
           })}
         </div>
       </div>
+      )}
 
+      {activeShopTab === 'upgrades' && (
       <div className="shop-section">
         <h2>{t('shop.upgrades')}</h2>
         <div className="shop-grid">
@@ -1189,7 +1638,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
                   <p>{t(upgrade.effectKey)}</p>
                 </div>
                 <div className="shop-meta">
-                  <span>{t('common.price')}: 🍪 {upgrade.price.toLocaleString()}</span>
+                  <span>{t('common.price')}: {icons.cookie} {upgrade.price.toLocaleString()}</span>
                   <span>{purchased ? t('common.purchased') : t('common.oneTime')}</span>
                 </div>
                 <button
@@ -1205,7 +1654,9 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
           })}
         </div>
       </div>
+      )}
 
+      {activeShopTab === 'timerDesigns' && (
       <div className="shop-section">
         <h2>{t('timerDesign.title')}</h2>
         <div className="shop-grid timer-design-grid">
@@ -1222,7 +1673,7 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
                   <p>{t(design.descriptionKey)}</p>
                 </div>
                 <div className="shop-meta">
-                  <span>{t('common.price')}: 🍪 {design.price.toLocaleString()}</span>
+                  <span>{t('common.price')}: {icons.cookie} {design.price.toLocaleString()}</span>
                   {owned && <span>{using ? t('timerDesign.using') : t('timerDesign.owned')}</span>}
                   {!owned && !canBuy && <span>{t('timerDesign.notEnoughCookies')}</span>}
                 </div>
@@ -1250,7 +1701,66 @@ function ShopView({ gameState, onBuyItem, onBuyUpgrade, onBuyTimerDesign, onSele
           })}
         </div>
       </div>
+      )}
+
+      {activeShopTab === 'backgrounds' && (
+      <div className="shop-section">
+        <h2>{t('backgroundTheme.title')}</h2>
+        <div className="shop-grid background-theme-grid">
+          {backgroundThemeItems.map((theme) => {
+            const ownedBackgroundThemes = gameState.ownedBackgroundThemes ?? ['default'];
+            const owned = ownedBackgroundThemes.includes(theme.id);
+            const using = backgroundState.theme === theme.id;
+            const canBuy = gameState.cookies >= theme.price && !owned;
+
+            return (
+              <article className={`shop-card background-theme-card ${using ? 'using' : ''}`} key={theme.id}>
+                <BackgroundThemePreview themeId={theme.id} />
+                <div>
+                  <h3>{t(theme.nameKey)}</h3>
+                  <p>{t(theme.descriptionKey)}</p>
+                </div>
+                <div className="shop-meta">
+                  <span>{t('common.price')}: {icons.cookie} {theme.price.toLocaleString()}</span>
+                  {owned && <span>{using ? t('backgroundTheme.using') : t('backgroundTheme.owned')}</span>}
+                  {!owned && !canBuy && <span>{t('backgroundTheme.notEnoughCookies')}</span>}
+                </div>
+                {owned ? (
+                  <button
+                    className={using ? 'secondary-button' : 'primary-button'}
+                    type="button"
+                    disabled={using}
+                    onClick={() => onSelectBackgroundTheme(theme.id)}
+                  >
+                    {using ? t('backgroundTheme.using') : t('backgroundTheme.use')}
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={!canBuy}
+                    onClick={() => onBuyBackgroundTheme(theme)}
+                  >
+                    {canBuy ? t('backgroundTheme.buy') : t('backgroundTheme.notEnoughCookies')}
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+      )}
     </section>
+  );
+}
+
+function BackgroundThemePreview({ themeId }) {
+  return (
+    <div className={`background-theme-preview background-preview-${themeId}`} aria-hidden="true">
+      <span className="background-preview-sky" />
+      <span className="background-preview-horizon" />
+      <span className="background-preview-ground" />
+    </div>
   );
 }
 
@@ -1260,24 +1770,32 @@ function TimerDesignPreview({ designId }) {
       {designId === 'flip' && (
         <div className="preview-flip">
           <span>25</span>
+          <i />
           <span>00</span>
         </div>
       )}
       {designId === 'water' && (
         <div className="preview-water">
-          <span />
+          <span className="preview-water-fill" />
+          <span className="preview-water-wave wave-a" />
+          <span className="preview-water-wave wave-b" />
+          <span className="preview-water-gloss" />
         </div>
       )}
       {designId === 'ring' && (
         <div className="preview-ring">
-          <span />
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle className="preview-ring-track" cx="60" cy="60" r="46" />
+            <circle className="preview-ring-progress" cx="60" cy="60" r="46" />
+          </svg>
+          <span className="preview-ring-time">25</span>
         </div>
       )}
     </div>
   );
 }
 
-function StatsView({ tasks, sessions, gameState }) {
+function StatsView({ tasks, sessions, gameState, workMinutes, selectedTask }) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = React.useState('numbers');
   const todayKey = toDateKey();
@@ -1320,8 +1838,151 @@ function StatsView({ tasks, sessions, gameState }) {
       )}
 
       {activeTab === 'bars' && <BarStatsChart data={sevenDayData} />}
-      {activeTab === 'line' && <LineStatsChart data={sevenDayData} />}
+
+      <BoostOverview
+        gameState={gameState}
+        workMinutes={workMinutes}
+        sessions={sessions}
+        selectedTask={selectedTask}
+      />
+
+      <ProgressOverview tasks={tasks} sessions={sessions} gameState={gameState} />
     </section>
+  );
+}
+
+function ProgressOverview({ tasks, sessions, gameState }) {
+  const { t } = useTranslation();
+  const metrics = getFocusMetrics(tasks, sessions, gameState);
+  const level = getFocusLevel(metrics);
+  const achievements = getAchievementProgress(metrics);
+  const unlockedCount = achievements.filter((achievement) => achievement.unlocked).length;
+
+  return (
+    <article className="progress-overview">
+      <div className="level-card">
+        <span>{t('level.title')}</span>
+        <strong>{t('level.current', { level: level.level })}</strong>
+        <div className="level-progress">
+          <span style={{ width: `${level.progress}%` }} />
+        </div>
+        <small>
+          {t('level.next', {
+            current: Math.floor(level.currentLevelXp),
+            target: level.xpPerLevel,
+            remaining: Math.ceil(level.nextLevelXp),
+          })}
+        </small>
+      </div>
+
+      <div className="achievement-summary">
+        <span>{t('achievements.title')}</span>
+        <strong>{unlockedCount}/{achievements.length}</strong>
+      </div>
+
+      <div className="achievement-grid">
+        {achievements.map((achievement) => (
+          <div
+            className={`achievement-card ${achievement.unlocked ? 'unlocked' : ''}`}
+            key={achievement.id}
+          >
+            <div>
+              <span>{achievement.unlocked ? icons.trophy : icons.sparkle}</span>
+              <strong>{t(achievement.nameKey)}</strong>
+            </div>
+            <p>{t(achievement.descriptionKey)}</p>
+            <div className="achievement-progress-row">
+              <div className="achievement-progress-track">
+                <span style={{ width: `${achievement.progress}%` }} />
+              </div>
+              <small>
+                {formatCookies(achievement.value)}/{formatCookies(achievement.target)}
+                {achievement.unitKey ? ` ${t(achievement.unitKey)}` : ''}
+              </small>
+            </div>
+            <em>{achievement.unlocked ? t('achievements.unlocked') : t('achievements.locked')}</em>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function BoostOverview({ gameState, workMinutes, sessions, selectedTask }) {
+  const { t } = useTranslation();
+  const activeBoosts = getActiveBoostDetails(gameState, { sessions, selectedTask });
+  const totalBoostPercent = getTotalBoostPercent(activeBoosts);
+  const ownedUpgrades = shopUpgrades.filter((upgrade) => hasUpgrade(gameState, upgrade.id));
+  const streakProgress = Number(gameState.currentStreak) % 3;
+  const nextStreakCount = streakProgress === 0 ? 3 : 3 - streakProgress;
+  const rewardBreakdown = getCookieRewardBreakdown(workMinutes, gameState, {
+    sessions,
+    selectedTask,
+  });
+  const boostStatusCards = getBoostStatusCards(gameState, { sessions, selectedTask });
+
+  return (
+    <article className="boost-overview">
+      <div className="boost-overview-head">
+        <div>
+          <span>{t('boostOverview.title')}</span>
+          <strong>
+            {activeBoosts.length > 0
+              ? t('boost.total', { percent: totalBoostPercent })
+              : t('boost.none')}
+          </strong>
+        </div>
+        <div className="boost-reward-preview">
+          <span>{t('boostOverview.nextReward')}</span>
+          <strong>{icons.cookie} {formatCookies(rewardBreakdown.total)}</strong>
+          <small>
+            {t('boostOverview.rewardFormula', {
+              base: formatCookies(rewardBreakdown.baseReward),
+              facilities: formatCookies(rewardBreakdown.itemBonus),
+              multiplier: Math.round(rewardBreakdown.multiplier * 100),
+            })}
+          </small>
+        </div>
+      </div>
+
+      <div className="boost-overview-list">
+        <span>{t('boostOverview.purchasedUpgrades')}</span>
+        <div>
+          {ownedUpgrades.length > 0 ? (
+            ownedUpgrades.map((upgrade) => <strong key={upgrade.id}>{t(upgrade.nameKey)}</strong>)
+          ) : (
+            <strong>{t('boostOverview.noOwnedUpgrades')}</strong>
+          )}
+        </div>
+        {hasUpgrade(gameState, 'streakBonus') && (
+          <small>{t('boostOverview.nextStreakBonus', { count: nextStreakCount })}</small>
+        )}
+      </div>
+
+      <div className="boost-status-grid">
+        {boostStatusCards.map((boost) => {
+          const progress = Math.min(100, (boost.current / boost.target) * 100);
+          return (
+            <div className={`boost-status-card ${boost.active ? 'active' : ''}`} key={boost.id}>
+              <div>
+                <span>{boost.icon} {t(boost.nameKey)}</span>
+                <strong>+{boost.percent}%</strong>
+              </div>
+              <p>{t(boost.descriptionKey)}</p>
+              <div className="boost-progress-row">
+                <div className="boost-progress-track">
+                  <span style={{ width: `${progress}%` }} />
+                </div>
+                <small>
+                  {boost.current}/{boost.target}
+                </small>
+              </div>
+              <em>{boost.active ? t('boost.active') : t('boostSystem.inProgress')}</em>
+            </div>
+          );
+        })}
+      </div>
+    </article>
   );
 }
 
@@ -1365,45 +2026,26 @@ function BarStatsChart({ data }) {
   );
 }
 
-function LineStatsChart({ data }) {
-  const { t } = useTranslation();
-  const maxMinutes = Math.max(...data.map((item) => item.minutes), 60);
-  const points = data.map((item, index) => {
-    const x = 24 + index * 42;
-    const y = 176 - (item.minutes / maxMinutes) * 136;
-    return { ...item, x, y };
-  });
-  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ');
-
-  return (
-    <article className="chart-card">
-      <div className="chart-heading">
-        <h2>{t('stats.focusTrend')}</h2>
-        <span>{t('common.unit')}: {t('common.minutes')}</span>
-      </div>
-      <div className="line-chart-wrap" aria-label={t('stats.focusTrend')}>
-        <svg className="line-chart" viewBox="0 0 300 220" role="img">
-          <line className="axis-line" x1="24" y1="176" x2="276" y2="176" />
-          <line className="axis-line" x1="24" y1="40" x2="24" y2="176" />
-          <polyline className="line-path" points={polyline} />
-          {points.map((point) => (
-            <g key={point.key}>
-              <circle className="line-dot" cx={point.x} cy={point.y} r="4.5" />
-              <text className="line-value" x={point.x} y={point.y - 10}>
-                {point.minutes}
-              </text>
-              <text className="line-label" x={point.x} y="202">
-                {point.label}
-              </text>
-            </g>
-          ))}
-        </svg>
-      </div>
-    </article>
-  );
-}
-
-function SettingsView({ settings, setSettings, resetTimer, currentLanguage, gameState, setGameState }) {
+function SettingsView({
+  settings,
+  setSettings,
+  resetTimer,
+  currentLanguage,
+  gameState,
+  setGameState,
+  backgroundState,
+  backgroundPreview,
+  setBackgroundPreview,
+  effectiveGrowthLevel,
+  authUser,
+  authStatus,
+  authError,
+  cloudSyncStatus,
+  onSignIn,
+  onSignUp,
+  onSignOut,
+  onManualCloudSync,
+}) {
   const { t, i18n } = useTranslation();
   function updateSetting(key, value) {
     setSettings((current) => ({ ...current, [key]: value }));
@@ -1417,6 +2059,16 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage, game
 
   return (
     <section className="settings-panel">
+      <FirebaseSyncPanel
+        authUser={authUser}
+        authStatus={authStatus}
+        authError={authError}
+        cloudSyncStatus={cloudSyncStatus}
+        onSignIn={onSignIn}
+        onSignUp={onSignUp}
+        onSignOut={onSignOut}
+        onManualCloudSync={onManualCloudSync}
+      />
       <NumberSetting
         label={t('settings.workTime')}
         value={settings.workMinutes}
@@ -1496,7 +2148,14 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage, game
             onChange={(checked) => updateSetting('developerMode', checked)}
           />
           {settings.developerMode && (
-            <DeveloperPanel gameState={gameState} setGameState={setGameState} />
+            <DeveloperPanel
+              gameState={gameState}
+              setGameState={setGameState}
+              backgroundState={backgroundState}
+              backgroundPreview={backgroundPreview}
+              setBackgroundPreview={setBackgroundPreview}
+              effectiveGrowthLevel={effectiveGrowthLevel}
+            />
           )}
         </>
       )}
@@ -1504,7 +2163,117 @@ function SettingsView({ settings, setSettings, resetTimer, currentLanguage, game
   );
 }
 
-function DeveloperPanel({ gameState, setGameState }) {
+function FirebaseSyncPanel({
+  authUser,
+  authStatus,
+  authError,
+  cloudSyncStatus,
+  onSignIn,
+  onSignUp,
+  onSignOut,
+  onManualCloudSync,
+}) {
+  const { t } = useTranslation();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const busy = ['checking', 'signingIn', 'loadingCloud'].includes(authStatus);
+  const signedIn = Boolean(authUser);
+
+  async function submit(event, mode) {
+    event.preventDefault();
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || password.length < 6) return;
+    if (mode === 'signUp') {
+      await onSignUp(trimmedEmail, password);
+    } else {
+      await onSignIn(trimmedEmail, password);
+    }
+  }
+
+  return (
+    <section className="firebase-sync-panel">
+      <div className="firebase-sync-heading">
+        <span>
+          <strong>{t('sync.title')}</strong>
+          <small>{t(`sync.status.${authStatus}`)}</small>
+        </span>
+        {signedIn && <em>{t(`sync.cloudStatus.${cloudSyncStatus}`)}</em>}
+      </div>
+
+      {!isFirebaseConfigured && (
+        <p className="sync-message">{t('sync.notConfigured')}</p>
+      )}
+
+      {isFirebaseConfigured && signedIn && (
+        <div className="sync-account">
+          <span>
+            {t('sync.signedInAs')}
+            <strong>{authUser.email}</strong>
+          </span>
+          <div className="sync-actions">
+            <button type="button" className="secondary-button" onClick={onManualCloudSync}>
+              {t('sync.syncNow')}
+            </button>
+            <button type="button" className="secondary-button" onClick={onSignOut}>
+              {t('sync.signOut')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isFirebaseConfigured && !signedIn && (
+        <form className="sync-form" onSubmit={(event) => submit(event, 'signIn')} noValidate>
+          <label>
+            <span>{t('sync.email')}</span>
+            <input
+              autoComplete="email"
+              inputMode="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@example.com"
+            />
+          </label>
+          <label>
+            <span>{t('sync.password')}</span>
+            <input
+              autoComplete="current-password"
+              minLength="6"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder={t('sync.passwordHint')}
+            />
+          </label>
+          <div className="sync-actions">
+            <button type="submit" className="primary-button" disabled={busy}>
+              {busy ? t('sync.working') : t('sync.signIn')}
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={busy}
+              onClick={(event) => submit(event, 'signUp')}
+            >
+              {t('sync.signUp')}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {authError && <p className="sync-error">{authError}</p>}
+    </section>
+  );
+}
+
+function DeveloperPanel({
+  gameState,
+  setGameState,
+  backgroundState,
+  backgroundPreview,
+  setBackgroundPreview,
+  effectiveGrowthLevel,
+}) {
   const { t } = useTranslation();
 
   function confirmAndRun(messageKey, action) {
@@ -1571,6 +2340,39 @@ function DeveloperPanel({ gameState, setGameState }) {
         >
           {t('developer.resetGameState')}
         </button>
+      </div>
+
+      <div className="developer-section">
+        <h3>Background Preview</h3>
+        <div className="background-preview-control">
+          <span>Level</span>
+          <div className="background-preview-options" role="group" aria-label="Background growth preview">
+            {backgroundPreviewLevels.map((level) => (
+              <button
+                key={level.id}
+                type="button"
+                className={
+                  backgroundPreview.growthLevel === level.id
+                    ? 'background-preview-chip active'
+                    : 'background-preview-chip'
+                }
+                onClick={() =>
+                  setBackgroundPreview((current) => ({ ...current, growthLevel: level.id }))
+                }
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <dl className="debug-state background-preview-state">
+          <DebugRow label="previewGrowthLevel" value={backgroundPreview.growthLevel} />
+          <DebugRow label="effectiveGrowthLevel" value={`Lv${effectiveGrowthLevel}`} />
+          <DebugRow
+            label="completedWorkSessions"
+            value={backgroundState.completedWorkSessions}
+          />
+        </dl>
       </div>
 
       <div className="developer-section">
