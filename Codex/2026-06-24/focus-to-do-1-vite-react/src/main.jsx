@@ -26,6 +26,7 @@ import {
   resetCookiesForDebug,
   resetGameStateForDebug,
   resetTimerDesignsForDebug,
+  setFocusSupporterForDebug,
   saveAppData,
   unlockAllTimerDesignsForDebug,
 } from './services/storageService';
@@ -73,6 +74,17 @@ const shopUpgrades = [
     nameKey: 'shop.morningBoost',
     price: 500,
     effectKey: 'shop.morningBoostEffect',
+  },
+];
+
+const paidProducts = [
+  {
+    id: 'focus_supporter_10',
+    nameKey: 'monetization.focusSupporter.name',
+    priceLabelKey: 'monetization.focusSupporter.price',
+    effectKey: 'monetization.focusSupporter.effect',
+    descriptionKey: 'monetization.focusSupporter.description',
+    percent: 10,
   },
 ];
 
@@ -137,6 +149,7 @@ const shopTabs = [
   { id: 'upgrades', labelKey: 'shop.upgrades' },
   { id: 'timerDesigns', labelKey: 'timerDesign.title' },
   { id: 'backgrounds', labelKey: 'backgroundTheme.title' },
+  { id: 'premium', labelKey: 'monetization.title' },
 ];
 
 const achievementDefinitions = [
@@ -250,6 +263,10 @@ function hasUpgrade(gameState, upgradeId) {
   return gameState.purchasedUpgrades.includes(upgradeId);
 }
 
+function hasPurchasedProduct(gameState, productId) {
+  return Boolean(gameState.purchasedProducts?.[productId]);
+}
+
 function getTodayWorkCount(sessions, date = new Date()) {
   const key = toDateKey(date);
   return sessions.filter(
@@ -276,6 +293,14 @@ function getActiveBoostDetails(gameState, options = {}) {
 
   if (hasUpgrade(gameState, 'focusBoost1')) {
     boosts.push({ id: 'focusBoost1', labelKey: 'shop.focusBoost1', icon: icons.sparkle, percent: 10 });
+  }
+  if (hasPurchasedProduct(gameState, 'focus_supporter_10')) {
+    boosts.push({
+      id: 'focusSupporter10',
+      labelKey: 'monetization.focusSupporter.name',
+      icon: icons.sparkle,
+      percent: 10,
+    });
   }
   if (hasUpgrade(gameState, 'morningBoost') && date.getHours() < 12) {
     boosts.push({ id: 'morningBoost', labelKey: 'shop.morningBoost', icon: icons.morning, percent: 20 });
@@ -1752,6 +1777,37 @@ function ShopView({
         </div>
       </div>
       )}
+
+      {activeShopTab === 'premium' && (
+      <div className="shop-section">
+        <h2>{t('monetization.title')}</h2>
+        <div className="shop-grid premium-grid">
+          {paidProducts.map((product) => {
+            const purchased = hasPurchasedProduct(gameState, product.id);
+
+            return (
+              <article className={`shop-card premium-card ${purchased ? 'purchased' : ''}`} key={product.id}>
+                <div className="premium-badge" aria-hidden="true">
+                  {icons.sparkle}
+                </div>
+                <div>
+                  <h3>{t(product.nameKey)}</h3>
+                  <p>{t(product.descriptionKey)}</p>
+                </div>
+                <div className="shop-meta">
+                  <span>{t('common.price')}: {t(product.priceLabelKey)}</span>
+                  <span>{t(product.effectKey)}</span>
+                  <span>{purchased ? t('common.purchased') : t('monetization.oneTimePurchase')}</span>
+                </div>
+                <button className="secondary-button" type="button" disabled>
+                  {purchased ? t('common.purchased') : t('monetization.availableOnGooglePlay')}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+      )}
     </section>
   );
 }
@@ -2345,6 +2401,26 @@ function DeveloperPanel({
       </div>
 
       <div className="developer-section">
+        <h3>{t('developer.monetizationTools')}</h3>
+        <div className="developer-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setGameState(setFocusSupporterForDebug(true, gameState))}
+          >
+            {t('developer.enableFocusSupporter')}
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setGameState(setFocusSupporterForDebug(false, gameState))}
+          >
+            {t('developer.disableFocusSupporter')}
+          </button>
+        </div>
+      </div>
+
+      <div className="developer-section">
         <h3>Background Preview</h3>
         <div className="background-preview-control">
           <span>Level</span>
@@ -2387,6 +2463,7 @@ function DeveloperPanel({
           <DebugRow label={t('developer.state.ownedTimerDesigns')} value={JSON.stringify(gameState.ownedTimerDesigns)} />
           <DebugRow label={t('developer.state.purchasedItems')} value={JSON.stringify(gameState.purchasedItems)} />
           <DebugRow label={t('developer.state.purchasedUpgrades')} value={JSON.stringify(gameState.purchasedUpgrades)} />
+          <DebugRow label={t('developer.state.purchasedProducts')} value={JSON.stringify(gameState.purchasedProducts)} />
         </dl>
       </div>
     </section>

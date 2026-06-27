@@ -1820,7 +1820,7 @@ select:focus {
   top: 10px;
   z-index: 2;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 6px;
   background: rgba(255, 255, 255, 0.9);
@@ -2168,6 +2168,35 @@ select:focus {
 .background-theme-card.using {
   border-color: color-mix(in srgb, var(--theme) 45%, rgba(36, 48, 51, 0.08));
   box-shadow: 0 16px 40px color-mix(in srgb, var(--theme) 16%, transparent);
+}
+
+.premium-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.premium-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.premium-card > .shop-meta,
+.premium-card > button {
+  grid-column: 2;
+}
+
+.premium-badge {
+  display: grid;
+  grid-row: span 3;
+  place-items: center;
+  width: 70px;
+  aspect-ratio: 1;
+  color: #fff;
+  font-size: 1.7rem;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.58), transparent 28%),
+    linear-gradient(145deg, #ffb84d, var(--theme));
+  border-radius: 8px;
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--theme) 24%, transparent);
 }
 
 button:disabled {

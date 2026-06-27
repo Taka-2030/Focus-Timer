@@ -154,8 +154,12 @@
       "selectedTimerDesign": "selectedTimerDesign",
       "ownedTimerDesigns": "ownedTimerDesigns",
       "purchasedItems": "purchasedItems",
-      "purchasedUpgrades": "purchasedUpgrades"
-    }
+      "purchasedUpgrades": "purchasedUpgrades",
+      "purchasedProducts": "purchasedProducts"
+    },
+    "monetizationTools": "課金テスト",
+    "enableFocusSupporter": "Focus SupporterをON",
+    "disableFocusSupporter": "Focus SupporterをOFF"
   },
   "settings": {
     "workTime": "作業時間",
@@ -278,6 +282,17 @@
       "saving": "保存中",
       "synced": "同期済み",
       "error": "エラー"
+    }
+  },
+  "monetization": {
+    "title": "プレミアム",
+    "oneTimePurchase": "買い切り",
+    "availableOnGooglePlay": "Google Play版で購入可能",
+    "focusSupporter": {
+      "name": "Focus Supporter",
+      "price": "¥90",
+      "effect": "作業報酬 +10%",
+      "description": "作業タイマー完了時のCookies報酬が永久に10%増える、買い切りの応援アップグレードです。"
     }
   }
 }

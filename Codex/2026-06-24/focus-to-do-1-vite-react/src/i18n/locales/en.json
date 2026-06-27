@@ -154,8 +154,12 @@
       "selectedTimerDesign": "selectedTimerDesign",
       "ownedTimerDesigns": "ownedTimerDesigns",
       "purchasedItems": "purchasedItems",
-      "purchasedUpgrades": "purchasedUpgrades"
-    }
+      "purchasedUpgrades": "purchasedUpgrades",
+      "purchasedProducts": "purchasedProducts"
+    },
+    "monetizationTools": "Monetization Tools",
+    "enableFocusSupporter": "Enable Focus Supporter",
+    "disableFocusSupporter": "Disable Focus Supporter"
   },
   "settings": {
     "workTime": "Work time",
@@ -278,6 +282,17 @@
       "saving": "Saving",
       "synced": "Synced",
       "error": "Error"
+    }
+  },
+  "monetization": {
+    "title": "Premium",
+    "oneTimePurchase": "One-time purchase",
+    "availableOnGooglePlay": "Available in Google Play version",
+    "focusSupporter": {
+      "name": "Focus Supporter",
+      "price": "¥90",
+      "effect": "Work rewards +10%",
+      "description": "A one-time supporter upgrade that permanently increases Cookies earned from completed focus sessions by 10%."
     }
   }
 }

@@ -19,6 +19,7 @@ export const defaultGameState = {
   cookies: 0,
   purchasedItems: {},
   purchasedUpgrades: [],
+  purchasedProducts: {},
   currentStreak: 0,
   totalCookiesEarned: 0,
   selectedTimerDesign: 'ring',
@@ -130,6 +131,18 @@ export function resetTimerDesignsForDebug(gameState = loadGameState()) {
   return nextGameState;
 }
 
+export function setFocusSupporterForDebug(enabled, gameState = loadGameState()) {
+  const nextGameState = {
+    ...gameState,
+    purchasedProducts: {
+      ...(gameState.purchasedProducts ?? {}),
+      focus_supporter_10: Boolean(enabled),
+    },
+  };
+  saveGameState(nextGameState);
+  return nextGameState;
+}
+
 export function resetGameStateForDebug() {
   const nextGameState = structuredClone(defaultGameState);
   saveGameState(nextGameState);
@@ -154,6 +167,10 @@ export function normalizeAppData(data) {
       purchasedUpgrades: Array.isArray(data?.gameState?.purchasedUpgrades)
         ? data.gameState.purchasedUpgrades
         : [],
+      purchasedProducts:
+        data?.gameState?.purchasedProducts && typeof data.gameState.purchasedProducts === 'object'
+          ? data.gameState.purchasedProducts
+          : {},
       selectedTimerDesign: data?.gameState?.selectedTimerDesign || 'ring',
       ownedTimerDesigns: normalizeOwnedTimerDesigns(data?.gameState?.ownedTimerDesigns),
       ownedBackgroundThemes: normalizeOwnedBackgroundThemes(data?.gameState?.ownedBackgroundThemes),
